@@ -1,0 +1,6 @@
+{
+  "name": "Catálogo de Itens Técnicos",
+  "description": "Sistema de consulta rápida e administração de catálogo industrial para localização de peças, códigos técnicos e gestão de inventário.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
