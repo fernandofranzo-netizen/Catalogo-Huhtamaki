@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, ArrowRight, Star, FileText } from 'lucide-react';
+import { Copy, Check, ArrowRight } from 'lucide-react';
 import { CatalogItem } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
 
@@ -14,12 +14,9 @@ interface ItemCardProps {
 export const ItemCard: React.FC<ItemCardProps> = ({
   item,
   onSelect,
-  onToggleFavorite,
   onCopySuccess,
-  onOpenDocuments,
 }) => {
   const [copied, setCopied] = useState(false);
-  const docCount = item.documentos ? item.documentos.length : 0;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -29,96 +26,96 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleFavorite(item.id);
-  };
+  // Determine placeholder type
+  const isSensor =
+    item.categoria.includes('SENSOR') ||
+    item.codigo.includes('PNEUM') ||
+    item.palavrasChave?.includes('sensor');
 
   return (
     <div
       id={`item-card-${item.id}`}
       onClick={() => onSelect(item)}
-      className="group relative flex flex-col justify-between bg-white border border-slate-200 rounded-lg p-4 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-150 cursor-pointer"
+      className="group relative flex flex-col justify-between bg-white border border-slate-200 rounded-md p-3 sm:p-3.5 hover:shadow-sm hover:border-slate-300 transition-all duration-150 cursor-pointer"
     >
       <div>
-        {/* Top bar: Category Badge + Favorite Star */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-cyan-700 bg-cyan-50 border border-cyan-200/70 rounded uppercase font-mono">
-            {item.categoria}
-          </span>
-          <button
-            id={`btn-fav-${item.id}`}
-            type="button"
-            onClick={handleFavoriteClick}
-            className={`p-1 rounded hover:bg-slate-100 transition-colors ${
-              item.favorito ? 'text-amber-500 fill-amber-500' : 'text-slate-300 hover:text-slate-500'
-            }`}
-            title={item.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          >
-            <Star className={`w-4 h-4 ${item.favorito ? 'fill-amber-400 text-amber-500' : ''}`} />
-          </button>
-        </div>
-
-        {/* Image / Blueprint Graphic */}
-        <div className="flex items-center justify-center w-full h-40 mb-3.5 bg-slate-50 border border-slate-100 rounded-md overflow-hidden p-2 group-hover:bg-slate-100/60 transition-colors">
+        {/* Image / Technical Graphic Area */}
+        <div className="relative flex items-center justify-center w-full h-44 mb-3 bg-[#f8fafc] border border-slate-200/80 rounded-xs overflow-hidden">
           {item.imagemUrl ? (
-            <img
-              src={item.imagemUrl}
-              alt={item.descricao}
-              referrerPolicy="no-referrer"
-              className="object-contain w-full h-full transition-transform duration-200 group-hover:scale-105 mix-blend-multiply"
-              loading="lazy"
-              onError={(e) => {
-                // If external image fails to load, gracefully hide it and let container show placeholder
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            <>
+              {/* Subtle technical corner ticks */}
+              <span className="absolute top-1 left-1.5 text-[9px] font-mono text-slate-300 pointer-events-none select-none">
+                ┌
+              </span>
+              <span className="absolute top-1 right-1.5 text-[9px] font-mono text-slate-300 pointer-events-none select-none">
+                ┐
+              </span>
+              <span className="absolute bottom-1 left-1.5 text-[9px] font-mono text-slate-300 pointer-events-none select-none">
+                └
+              </span>
+              <span className="absolute bottom-1 right-1.5 text-[9px] font-mono text-slate-300 pointer-events-none select-none">
+                ┘
+              </span>
+
+              <img
+                src={item.imagemUrl}
+                alt={item.descricao}
+                referrerPolicy="no-referrer"
+                className="object-contain w-full h-full p-2 transition-transform duration-200 group-hover:scale-102"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+
+              {/* Vista de referência label */}
+              <span className="absolute bottom-1.5 left-2 text-[8px] font-mono tracking-widest text-slate-400 uppercase select-none">
+                VISTA DE REFERÊNCIA
+              </span>
+            </>
           ) : (
-            <TechnicalPlaceholder size="md" className="w-full h-full border-0 bg-transparent" />
+            <TechnicalPlaceholder
+              type={isSensor ? 'sensor' : 'componente'}
+              label={isSensor ? 'SENSOR' : 'COMPONENTE'}
+              showUnregisteredText={true}
+            />
           )}
         </div>
 
-        {/* Item Code (Prominent Monospace) */}
-        <div className="font-mono text-sm font-bold tracking-wide text-slate-900 group-hover:text-blue-700 transition-colors">
+        {/* Category Pill */}
+        <div className="mb-1">
+          <span className="inline-block px-2 py-0.5 text-[9px] font-bold tracking-wider text-cyan-700 bg-cyan-50/60 border border-cyan-300/70 rounded-xs uppercase font-mono">
+            {item.categoria}
+          </span>
+        </div>
+
+        {/* Item Code */}
+        <div className="font-mono text-sm sm:text-[15px] font-bold tracking-tight text-slate-900 group-hover:text-cyan-800 transition-colors">
           {item.codigo}
         </div>
 
         {/* Item Description */}
-        <p className="mt-1 text-xs text-slate-600 line-clamp-2 min-h-[32px] leading-relaxed">
+        <p className="mt-1 text-xs text-slate-600 uppercase font-medium leading-snug line-clamp-2 min-h-[32px]">
           {item.descricao}
         </p>
-
-        {/* Optional Metadata snippet */}
-        {item.fabricante && (
-          <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1 font-mono">
-            <span>FABR:</span>
-            <span className="font-semibold text-slate-600">{item.fabricante}</span>
-            {item.dimensao && (
-              <>
-                <span className="text-slate-300">•</span>
-                <span className="truncate">{item.dimensao}</span>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Footer Actions */}
+      {/* Card Action Row matching screenshot */}
       <div className="flex items-center gap-2 pt-3 mt-3 border-t border-slate-100">
         <button
           id={`btn-copy-${item.id}`}
           type="button"
           onClick={handleCopy}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 text-xs font-bold tracking-wider uppercase rounded border transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-bold tracking-wider uppercase rounded-xs border transition-all font-mono ${
             copied
               ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-              : 'bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 border-amber-300/80 hover:border-amber-400'
+              : 'bg-amber-50/40 hover:bg-amber-100/70 text-amber-800 border-amber-400/90'
           }`}
         >
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Copiado</span>
+              <span>Copiado!</span>
             </>
           ) : (
             <>
@@ -128,26 +125,6 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </button>
 
-        {/* Botão de Documentação Técnica / Data-sheet */}
-        <button
-          id={`btn-doc-${item.id}`}
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenDocuments?.(item);
-          }}
-          className={`flex items-center justify-center gap-1 p-2 text-xs font-bold rounded border transition-colors ${
-            docCount > 0
-              ? 'bg-cyan-50 border-cyan-300 text-cyan-800 hover:bg-cyan-100'
-              : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-          }`}
-          title={docCount > 0 ? `${docCount} documento(s) técnico(s) / data-sheet anexado(s)` : 'Anexar ou ver documentação técnica (Data-sheet)'}
-          aria-label="Documentação técnica"
-        >
-          <FileText className="w-4 h-4" />
-          {docCount > 0 && <span className="text-[10px] font-mono font-black text-cyan-700">{docCount}</span>}
-        </button>
-
         <button
           id={`btn-view-${item.id}`}
           type="button"
@@ -155,7 +132,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             e.stopPropagation();
             onSelect(item);
           }}
-          className="flex items-center justify-center p-2 text-slate-500 bg-slate-50 hover:bg-slate-200/80 hover:text-slate-800 border border-slate-200 rounded transition-colors"
+          className="flex items-center justify-center p-2 text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-800 border border-slate-200 rounded-xs transition-colors"
           title="Ver detalhes do item"
           aria-label="Ver detalhes"
         >

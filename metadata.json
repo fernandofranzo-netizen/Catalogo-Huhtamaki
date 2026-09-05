@@ -1,6 +1,6 @@
 {
-  "name": "Catálogo de Itens Técnicos",
-  "description": "Sistema de consulta rápida e administração de catálogo industrial para localização de peças, códigos técnicos e gestão de inventário.",
+  "name": "Catálogo Manutenção",
+  "description": "Sistema de busca operacional de itens técnicos, rolamentos, sensores e componentes para manutenção industrial.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

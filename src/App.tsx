@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Menu, Plus, Lock, Unlock, Share2, ShieldCheck, UserCheck } from 'lucide-react';
+import { Menu, Plus, Lock } from 'lucide-react';
 import { CatalogItem, ViewMode, TechnicalDocument, UserRole } from './types';
 import { INITIAL_CATALOG_ITEMS, CATEGORIAS_PADRAO } from './data/initialCatalog';
 import { Sidebar } from './components/Sidebar';
@@ -18,14 +18,14 @@ import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v3';
+const STORAGE_KEY = 'cm_catalog_items_v6';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
 export default function App() {
   const [items, setItems] = useState<CatalogItem[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('cm_catalog_items_v2');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -349,62 +349,8 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="md:pl-64 min-h-screen flex flex-col">
-        {/* Desktop Access Bar */}
-        <div className="hidden md:flex items-center justify-between px-6 py-2 bg-slate-900 border-b border-slate-800 text-xs">
-          <div className="flex items-center gap-2.5">
-            {userRole === 'gestor' ? (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 font-bold uppercase tracking-wider text-[10px] rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                <ShieldCheck className="w-3 h-3" />
-                Modo Gestor Ativo • Acesso Total de Edição & Cadastro
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 font-bold uppercase tracking-wider text-[10px] rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                <UserCheck className="w-3 h-3" />
-                Modo Manutentor • Consulta Rápida & Data-sheets (Somente Leitura)
-              </span>
-            )}
-            <span className="text-[11px] text-slate-400 hidden lg:inline">
-              {userRole === 'gestor'
-                ? 'Novos cadastros e modificações ficam disponíveis instantaneamente.'
-                : 'Os manutentores podem consultar códigos, especificações e abrir anexos técnicos.'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleShareLink}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors"
-              title="Copiar link do catálogo para a equipe técnica"
-            >
-              <Share2 className="w-3 h-3 text-amber-400" />
-              <span>Link Manutenção</span>
-            </button>
-
-            {userRole === 'gestor' ? (
-              <button
-                type="button"
-                onClick={handleLogoutGestor}
-                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors"
-              >
-                <Lock className="w-3 h-3 text-slate-400" />
-                <span>Bloquear Gestor</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handlePromptGestor}
-                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-950 bg-[#f59e0b] hover:bg-[#d97706] rounded transition-colors"
-              >
-                <Unlock className="w-3 h-3 text-slate-950" />
-                <span>Acesso Gestor</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="md:pl-56 min-h-screen flex flex-col bg-[#f8fafc]">
+        <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 sm:p-5 lg:p-6">
           {currentView === 'catalog' && (
             <CatalogSearch
               items={items}
