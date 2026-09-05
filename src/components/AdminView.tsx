@@ -143,9 +143,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
             type="button"
             onClick={onOpenImportModal}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors"
+            title="Importar catálogo em massa via planilha .xlsx ou .csv"
           >
             <Upload className="w-4 h-4 text-slate-500" />
-            <span>Importar</span>
+            <span>Importar (.xlsx / .csv)</span>
           </button>
 
           <button
@@ -153,9 +154,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
             type="button"
             onClick={onExport}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors"
+            title="Exportar base completa para Excel (.xlsx)"
           >
             <Download className="w-4 h-4 text-slate-500" />
-            <span>Exportar</span>
+            <span>Exportar (.xlsx)</span>
           </button>
         </div>
       </div>

@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Menu, Plus, Lock } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Menu, Plus, Lock, AlertTriangle } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { CatalogItem, ViewMode, TechnicalDocument, UserRole } from './types';
 import { INITIAL_CATALOG_ITEMS, CATEGORIAS_PADRAO } from './data/initialCatalog';
 import { Sidebar } from './components/Sidebar';
@@ -18,28 +19,86 @@ import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v6';
+const STORAGE_KEY = 'cm_catalog_items_v7';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
 export default function App() {
   const [items, setItems] = useState<CatalogItem[]>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      let saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        // Fallback check v6
+        saved = localStorage.getItem('cm_catalog_items_v6');
+      }
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge default sample documents if item doesn't have documents yet
           const initialMap = new Map(INITIAL_CATALOG_ITEMS.map((i) => [i.codigo, i]));
-          return parsed.map((item: CatalogItem) => {
-            if (!item.documentos || item.documentos.length === 0) {
-              const defaultItem = initialMap.get(item.codigo);
+          const existingCodes = new Set<string>();
+
+          const updatedList = parsed.map((item: CatalogItem) => {
+            const defaultItem = initialMap.get(item.codigo);
+            let updated = { ...item };
+            existingCodes.add(item.codigo.trim().toUpperCase());
+
+            // Specific fix for user's Kampf brake disc
+            if (updated.codigo.trim().toUpperCase() === 'MM-REPOS-00213-00') {
+              updated.descricao = 'DISCO DE FREIO COMPLETO KAMPF 877041685';
+              updated.categoria = 'PEÇAS DE MÁQUINA / REPOSIÇÃO';
+              updated.fabricante = 'KAMPF';
+              updated.dimensao = 'P/N 877041685';
+              updated.imagemUrl = '/src/assets/images/kampf_brake_disc_1788575763351.jpg';
+            }
+
+            // Ensure updated sample documents if missing
+            if (!updated.documentos || updated.documentos.length === 0) {
               if (defaultItem?.documentos && defaultItem.documentos.length > 0) {
-                return { ...item, documentos: defaultItem.documentos };
+                updated.documentos = defaultItem.documentos;
+              } else {
+                updated.documentos = [];
               }
             }
-            return { ...item, documentos: item.documentos || [] };
+
+            // Ensure high quality default image is synced if item has no image or old placeholder
+            if ((!updated.imagemUrl || updated.imagemUrl.includes('bearing_skf_6204_1788569544706')) && defaultItem?.imagemUrl) {
+              updated.imagemUrl = defaultItem.imagemUrl;
+            }
+
+            // AUTO-HEAL: If an item's description is repeating the code or has placeholder
+            // and the official catalog has the real description, restore it!
+            if (
+              (!updated.descricao ||
+                updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
+                updated.descricao.includes('(SEM DESCRIÇÃO')) &&
+              defaultItem?.descricao
+            ) {
+              updated.descricao = defaultItem.descricao;
+              if (defaultItem.categoria && (!updated.categoria || updated.categoria === 'OUTROS / REPOSIÇÃO')) {
+                updated.categoria = defaultItem.categoria;
+              }
+              if (defaultItem.fabricante && !updated.fabricante) {
+                updated.fabricante = defaultItem.fabricante;
+              }
+              if (defaultItem.dimensao && !updated.dimensao) {
+                updated.dimensao = defaultItem.dimensao;
+              }
+              if (defaultItem.observacoes && !updated.observacoes) {
+                updated.observacoes = defaultItem.observacoes;
+              }
+            }
+
+            return updated;
           });
+
+          // Add any new items from INITIAL_CATALOG_ITEMS (e.g. items from user's spreadsheet)
+          INITIAL_CATALOG_ITEMS.forEach((initialItem) => {
+            if (!existingCodes.has(initialItem.codigo.trim().toUpperCase())) {
+              updatedList.push(initialItem);
+            }
+          });
+
+          return updatedList;
         }
       }
     } catch (e) {
@@ -251,15 +310,86 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Import items
-  const handleImportItems = (newItems: CatalogItem[]) => {
-    setItems((prev) => {
-      // Merge by code to avoid duplicate codes, or append
-      const existingCodes = new Set(prev.map((i) => i.codigo));
-      const freshItems = newItems.filter((i) => !existingCodes.has(i.codigo));
-      return [...freshItems, ...prev];
-    });
-    showToast(`${newItems.length} itens importados com sucesso!`, 'success');
+  // Update item image manually
+  const handleUpdateItemImage = (itemId: string, imageUrl: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, imagemUrl: imageUrl } : item))
+    );
+    setSelectedItem((prev) =>
+      prev && prev.id === itemId ? { ...prev, imagemUrl: imageUrl } : prev
+    );
+    showToast(
+      imageUrl ? 'Foto técnica do item atualizada com sucesso!' : 'Imagem removida com sucesso.',
+      'success'
+    );
+  };
+
+  // Import items (bulk update via .xlsx, .csv or json)
+  const handleImportItems = (newItems: CatalogItem[], mode: 'merge' | 'replace' = 'merge') => {
+    if (mode === 'replace') {
+      setItems(newItems);
+      showToast(`Catálogo substituído com sucesso (${newItems.length} itens gravados)!`, 'success');
+    } else {
+      setItems((prev) => {
+        // Map new items by normalized code
+        const newMap = new Map(newItems.map((i) => [i.codigo.trim().toUpperCase(), i]));
+        let updatedCount = 0;
+        let addedCount = 0;
+
+        // Update existing items that match code
+        const updatedExisting = prev.map((item) => {
+          const match = newMap.get(item.codigo.trim().toUpperCase());
+          if (match) {
+            newMap.delete(item.codigo.trim().toUpperCase());
+            updatedCount++;
+
+            // Preserve existing quality description if imported item just repeats the code or is placeholder
+            let finalDescricao = match.descricao;
+            const isMatchDescRepeatedCode =
+              !match.descricao ||
+              match.descricao.trim().toUpperCase() === item.codigo.trim().toUpperCase() ||
+              match.descricao.includes('(SEM DESCRIÇÃO');
+
+            const isExistingDescValid =
+              item.descricao &&
+              item.descricao.trim().toUpperCase() !== item.codigo.trim().toUpperCase() &&
+              !item.descricao.includes('(SEM DESCRIÇÃO');
+
+            if (isMatchDescRepeatedCode && isExistingDescValid) {
+              finalDescricao = item.descricao;
+            }
+
+            return {
+              ...item,
+              descricao: finalDescricao || item.descricao,
+              categoria: match.categoria !== 'OUTROS / REPOSIÇÃO' ? match.categoria : item.categoria,
+              fabricante: match.fabricante || item.fabricante,
+              dimensao: match.dimensao || item.dimensao,
+              localizacao: match.localizacao || item.localizacao,
+              palavrasChave:
+                match.palavrasChave && match.palavrasChave.length > 0
+                  ? match.palavrasChave
+                  : item.palavrasChave,
+              observacoes: match.observacoes || item.observacoes,
+              status: match.status || item.status,
+              imagemUrl: match.imagemUrl || item.imagemUrl,
+            };
+          }
+          return item;
+        });
+
+        // Any remaining in map are brand new items
+        const freshItems = Array.from(newMap.values());
+        addedCount = freshItems.length;
+
+        showToast(
+          `Banco de dados atualizado: ${updatedCount} itens modificados e ${addedCount} novos itens adicionados!`,
+          'success'
+        );
+
+        return [...freshItems, ...updatedExisting];
+      });
+    }
   };
 
   // Restore factory defaults
@@ -268,19 +398,43 @@ export default function App() {
     showToast('Catálogo padrão de fábrica restaurado com sucesso.', 'info');
   };
 
-  // Export items to JSON file
+  // Export items to Excel (.xlsx) spreadsheet
   const handleExportItems = () => {
     try {
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-        JSON.stringify(items, null, 2)
-      )}`;
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute('href', jsonString);
-      downloadAnchor.setAttribute('download', `catalogo-cm-pecas-${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('Exportação concluída com sucesso!', 'success');
+      const exportRows = items.map((item) => ({
+        CODIGO: item.codigo,
+        DESCRICAO: item.descricao,
+        CATEGORIA: item.categoria,
+        FABRICANTE: item.fabricante || '',
+        DIMENSAO: item.dimensao || '',
+        LOCALIZACAO: item.localizacao || '',
+        PALAVRAS_CHAVE: item.palavrasChave ? item.palavrasChave.join(', ') : '',
+        STATUS: item.status,
+        OBSERVACOES: item.observacoes || '',
+        IMAGEM_URL: item.imagemUrl || '',
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      worksheet['!cols'] = [
+        { wch: 22 },
+        { wch: 45 },
+        { wch: 25 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 35 },
+        { wch: 35 },
+        { wch: 14 },
+        { wch: 35 },
+        { wch: 20 },
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Catálogo Manutenção');
+      XLSX.writeFile(
+        workbook,
+        `catalogo_cm_manutencao_${new Date().toISOString().split('T')[0]}.xlsx`
+      );
+      showToast('Catálogo exportado para planilha Excel (.xlsx) com sucesso!', 'success');
     } catch (e) {
       showToast('Erro ao exportar catálogo.', 'error');
     }
@@ -375,6 +529,7 @@ export default function App() {
               onOpenDocuments={handleOpenDocuments}
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
+              onUpdateImage={handleUpdateItemImage}
             />
           )}
 

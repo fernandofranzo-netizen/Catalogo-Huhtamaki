@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Copy, Check, Star, Edit3, Tag, MapPin, Building2, Ruler, ShieldAlert, FileText, ExternalLink, Plus, Trash2, Lock } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Star, Edit3, Tag, MapPin, Building2, Ruler, ShieldAlert, FileText, ExternalLink, Plus, Trash2, Lock, Camera, Upload } from 'lucide-react';
 import { CatalogItem, TechnicalDocument, UserRole } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
+import { ImageUploadModal } from './ImageUploadModal';
 
 interface ItemDetailProps {
   item: CatalogItem;
@@ -10,6 +11,7 @@ interface ItemDetailProps {
   onToggleFavorite: (id: string) => void;
   onCopySuccess: (code: string) => void;
   onOpenDocuments: (item: CatalogItem) => void;
+  onUpdateImage?: (itemId: string, imageUrl: string) => void;
   userRole: UserRole;
   onPromptGestor?: () => void;
 }
@@ -21,10 +23,12 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
   onToggleFavorite,
   onCopySuccess,
   onOpenDocuments,
+  onUpdateImage,
   userRole,
   onPromptGestor,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const docs = item.documentos || [];
 
   const handleCopy = () => {
@@ -32,6 +36,18 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
     setCopied(true);
     onCopySuccess(item.codigo);
     setTimeout(() => setCopied(false), 1800);
+  };
+
+  const handleSaveImage = (itemId: string, imageUrl: string) => {
+    if (onUpdateImage) {
+      onUpdateImage(itemId, imageUrl);
+    }
+  };
+
+  const handleRemoveImage = (itemId: string) => {
+    if (onUpdateImage) {
+      onUpdateImage(itemId, '');
+    }
   };
 
   return (
@@ -135,23 +151,63 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
       {/* Two Column Layout: Visual vs Identification Specs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Visual / Image Container */}
-        <div className="lg:col-span-6 flex flex-col">
-          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px]">
-            {item.imagemUrl ? (
-              <div className="w-full h-80 flex items-center justify-center p-4">
-                <img
-                  src={item.imagemUrl}
-                  alt={item.descricao}
-                  referrerPolicy="no-referrer"
-                  className="max-h-full max-w-full object-contain mix-blend-multiply"
-                />
-              </div>
-            ) : (
-              <TechnicalPlaceholder size="lg" className="w-full h-80 border-0 bg-transparent" />
-            )}
-            <div className="w-full pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
-              <span>VISUAL TÉCNICO // REF. CAD</span>
-              <span>{item.imagemUrl ? 'FOTO REAL / REVISADA' : 'ESQUEMA TÉCNICO'}</span>
+        <div className="lg:col-span-6 flex flex-col space-y-3">
+          <div className="bg-white border border-slate-200 rounded-lg p-5 sm:p-6 shadow-xs flex flex-col items-center justify-between min-h-[400px]">
+            {/* Top Toolbar inside image card */}
+            <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100 text-xs">
+              <span className="font-mono text-[11px] font-bold text-slate-400 tracking-wider uppercase">
+                {item.imagemUrl ? 'FOTO REAL / REVISADA' : 'ESQUEMA TÉCNICO CAD'}
+              </span>
+
+              <button
+                id="btn-upload-image-detail"
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-cyan-900 bg-cyan-50 hover:bg-cyan-100 border border-cyan-300 rounded-md shadow-2xs transition-colors cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5 text-cyan-700" />
+                <span>{item.imagemUrl ? 'Alterar Imagem' : 'Inserir Imagem Manualmente'}</span>
+              </button>
+            </div>
+
+            {/* Image display or placeholder */}
+            <div className="w-full flex-1 flex items-center justify-center p-2 min-h-[260px]">
+              {item.imagemUrl ? (
+                <div className="w-full h-72 flex items-center justify-center p-2">
+                  <img
+                    src={item.imagemUrl}
+                    alt={item.descricao}
+                    referrerPolicy="no-referrer"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-full flex flex-col items-center justify-center py-4">
+                  <TechnicalPlaceholder size="lg" className="w-full h-56 border-0 bg-transparent" />
+                  <button
+                    id="btn-add-image-empty-state"
+                    type="button"
+                    onClick={() => setIsImageModalOpen(true)}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 text-xs font-extrabold text-slate-950 bg-[#f59e0b] hover:bg-[#d97706] rounded-md shadow-xs transition-colors cursor-pointer uppercase tracking-wider"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>Inserir Imagem Manualmente</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom info label */}
+            <div className="w-full pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
+              <span>REF: {item.codigo}</span>
+              <button
+                id="btn-open-modal-sublink"
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                className="text-cyan-700 hover:text-cyan-900 font-sans font-bold hover:underline cursor-pointer"
+              >
+                {item.imagemUrl ? 'Substituir ou remover imagem' : 'Inserir foto do item'}
+              </button>
             </div>
           </div>
         </div>
@@ -327,6 +383,15 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Manual Image Upload Modal */}
+      <ImageUploadModal
+        isOpen={isImageModalOpen}
+        item={item}
+        onClose={() => setIsImageModalOpen(false)}
+        onSaveImage={handleSaveImage}
+        onRemoveImage={handleRemoveImage}
+      />
     </div>
   );
 };
