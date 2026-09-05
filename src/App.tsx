@@ -19,93 +19,152 @@ import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v7';
+const STORAGE_KEY = 'cm_catalog_items_v8';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
-export default function App() {
-  const [items, setItems] = useState<CatalogItem[]>(() => {
-    try {
-      let saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) {
-        // Fallback check v6
-        saved = localStorage.getItem('cm_catalog_items_v6');
+// Function to reliably recover and merge items across all previous and current storage keys
+function loadAndMergeCatalog(): CatalogItem[] {
+  try {
+    // 1. Identify all candidate localStorage keys (v8, v7, v6, v5, v4, v3, v2, v1, etc.)
+    const candidateKeys = [
+      'cm_catalog_items_v8',
+      'cm_catalog_items_v7',
+      'cm_catalog_items_v6',
+      'cm_catalog_items_v5',
+      'cm_catalog_items_v4',
+      'cm_catalog_items_v3',
+      'cm_catalog_items_v2',
+      'cm_catalog_items_v1',
+      'cm_catalog_items',
+      'catalog_items',
+    ];
+
+    // Dynamically check any other key in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (
+        k &&
+        (k.includes('catalog') || k.includes('item')) &&
+        !candidateKeys.includes(k) &&
+        k !== PIN_STORAGE_KEY &&
+        k !== ROLE_STORAGE_KEY
+      ) {
+        candidateKeys.push(k);
       }
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const initialMap = new Map(INITIAL_CATALOG_ITEMS.map((i) => [i.codigo, i]));
-          const existingCodes = new Set<string>();
-
-          const updatedList = parsed.map((item: CatalogItem) => {
-            const defaultItem = initialMap.get(item.codigo);
-            let updated = { ...item };
-            existingCodes.add(item.codigo.trim().toUpperCase());
-
-            // Specific fix for user's Kampf brake disc
-            if (updated.codigo.trim().toUpperCase() === 'MM-REPOS-00213-00') {
-              updated.descricao = 'DISCO DE FREIO COMPLETO KAMPF 877041685';
-              updated.categoria = 'PEÇAS DE MÁQUINA / REPOSIÇÃO';
-              updated.fabricante = 'KAMPF';
-              updated.dimensao = 'P/N 877041685';
-              updated.imagemUrl = '/src/assets/images/kampf_brake_disc_1788575763351.jpg';
-            }
-
-            // Ensure updated sample documents if missing
-            if (!updated.documentos || updated.documentos.length === 0) {
-              if (defaultItem?.documentos && defaultItem.documentos.length > 0) {
-                updated.documentos = defaultItem.documentos;
-              } else {
-                updated.documentos = [];
-              }
-            }
-
-            // Ensure high quality default image is synced if item has no image or old placeholder
-            if ((!updated.imagemUrl || updated.imagemUrl.includes('bearing_skf_6204_1788569544706')) && defaultItem?.imagemUrl) {
-              updated.imagemUrl = defaultItem.imagemUrl;
-            }
-
-            // AUTO-HEAL: If an item's description is repeating the code or has placeholder
-            // and the official catalog has the real description, restore it!
-            if (
-              (!updated.descricao ||
-                updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
-                updated.descricao.includes('(SEM DESCRIÇÃO')) &&
-              defaultItem?.descricao
-            ) {
-              updated.descricao = defaultItem.descricao;
-              if (defaultItem.categoria && (!updated.categoria || updated.categoria === 'OUTROS / REPOSIÇÃO')) {
-                updated.categoria = defaultItem.categoria;
-              }
-              if (defaultItem.fabricante && !updated.fabricante) {
-                updated.fabricante = defaultItem.fabricante;
-              }
-              if (defaultItem.dimensao && !updated.dimensao) {
-                updated.dimensao = defaultItem.dimensao;
-              }
-              if (defaultItem.observacoes && !updated.observacoes) {
-                updated.observacoes = defaultItem.observacoes;
-              }
-            }
-
-            return updated;
-          });
-
-          // Add any new items from INITIAL_CATALOG_ITEMS (e.g. items from user's spreadsheet)
-          INITIAL_CATALOG_ITEMS.forEach((initialItem) => {
-            if (!existingCodes.has(initialItem.codigo.trim().toUpperCase())) {
-              updatedList.push(initialItem);
-            }
-          });
-
-          return updatedList;
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to parse saved items from localStorage', e);
     }
+
+    // Map to hold items extracted from previous user sessions
+    const userSavedItemsMap = new Map<string, CatalogItem>();
+
+    // Reverse so newer keys take precedence for edited fields
+    for (const key of [...candidateKeys].reverse()) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            for (const it of parsed) {
+              if (it && it.codigo && typeof it.codigo === 'string') {
+                const codeKey = it.codigo.trim().toUpperCase();
+                const existing = userSavedItemsMap.get(codeKey);
+                if (!existing) {
+                  userSavedItemsMap.set(codeKey, it);
+                } else {
+                  userSavedItemsMap.set(codeKey, {
+                    ...existing,
+                    ...it,
+                    documentos:
+                      it.documentos && it.documentos.length > 0
+                        ? it.documentos
+                        : existing.documentos,
+                    imagemUrl: it.imagemUrl || existing.imagemUrl,
+                    favorito: it.favorito ?? existing.favorito,
+                  });
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Continue scanning remaining candidate keys
+      }
+    }
+
+    // Now merge with INITIAL_CATALOG_ITEMS (which has the complete 1,106 items from the catalog)
+    const initialMap = new Map(
+      INITIAL_CATALOG_ITEMS.map((i) => [i.codigo.trim().toUpperCase(), i])
+    );
+    const mergedList: CatalogItem[] = [];
+    const processedCodes = new Set<string>();
+
+    // 1. Process all user-saved items first to retain any custom descriptions, images, docs, or locations
+    for (const [codeKey, userItem] of userSavedItemsMap.entries()) {
+      const defaultItem = initialMap.get(codeKey);
+      const updated: CatalogItem = { ...userItem };
+      updated.codigo = updated.codigo.trim();
+
+      // Specific fix for user's Kampf brake disc
+      if (codeKey === 'MM-REPOS-00213-00') {
+        updated.descricao = 'DISCO DE FREIO COMPLETO KAMPF 877041685';
+        updated.categoria = 'PEÇAS DE MÁQUINA / REPOSIÇÃO';
+        updated.fabricante = 'KAMPF';
+        updated.dimensao = 'P/N 877041685';
+        updated.imagemUrl = '/assets/images/kampf_brake_disc_1788575763351.jpg';
+      }
+
+      // Preserve or set technical documents
+      if (!updated.documentos || updated.documentos.length === 0) {
+        updated.documentos = defaultItem?.documentos && defaultItem.documentos.length > 0
+          ? defaultItem.documentos
+          : [];
+      }
+
+      // Sync high-quality image if item doesn't have one or has generic fallback
+      if (
+        (!updated.imagemUrl || updated.imagemUrl.includes('bearing_skf_6204_1788569544706')) &&
+        defaultItem?.imagemUrl
+      ) {
+        updated.imagemUrl = defaultItem.imagemUrl;
+      }
+
+      // Auto-heal empty or repeated code descriptions with official catalog description
+      if (
+        (!updated.descricao ||
+          updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
+          updated.descricao.includes('(SEM DESCRIÇÃO')) &&
+        defaultItem?.descricao
+      ) {
+        updated.descricao = defaultItem.descricao;
+        if (defaultItem.categoria && (!updated.categoria || updated.categoria === 'OUTROS / REPOSIÇÃO')) {
+          updated.categoria = defaultItem.categoria;
+        }
+        if (defaultItem.fabricante && !updated.fabricante) updated.fabricante = defaultItem.fabricante;
+        if (defaultItem.dimensao && !updated.dimensao) updated.dimensao = defaultItem.dimensao;
+      }
+
+      mergedList.push(updated);
+      processedCodes.add(codeKey);
+    }
+
+    // 2. Add any official catalog items that weren't in user's saved data
+    for (const initItem of INITIAL_CATALOG_ITEMS) {
+      const codeKey = initItem.codigo.trim().toUpperCase();
+      if (!processedCodes.has(codeKey)) {
+        mergedList.push(initItem);
+        processedCodes.add(codeKey);
+      }
+    }
+
+    return mergedList.length > 0 ? mergedList : INITIAL_CATALOG_ITEMS;
+  } catch (err) {
+    console.error('Failed to load and merge catalog:', err);
     return INITIAL_CATALOG_ITEMS;
-  });
+  }
+}
+
+export default function App() {
+  const [items, setItems] = useState<CatalogItem[]>(() => loadAndMergeCatalog());
 
   const [currentView, setCurrentView] = useState<ViewMode>('catalog');
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -392,10 +451,59 @@ export default function App() {
     }
   };
 
-  // Restore factory defaults
+  // Restore factory defaults / Sync complete official catalog
   const handleRestoreDefaults = () => {
     setItems(INITIAL_CATALOG_ITEMS);
-    showToast('Catálogo padrão de fábrica restaurado com sucesso.', 'info');
+    showToast(`Catálogo restaurado com sucesso (${INITIAL_CATALOG_ITEMS.length} itens oficiais carregados).`, 'info');
+  };
+
+  // Sync complete official catalog with current user data (keeps customizations, adds missing)
+  const handleRestoreOfficialCatalog = () => {
+    const initialMap = new Map(INITIAL_CATALOG_ITEMS.map((i) => [i.codigo.trim().toUpperCase(), i]));
+    const mergedList: CatalogItem[] = [];
+    const addedCodes = new Set<string>();
+
+    // 1. Keep existing items and enhance if missing details
+    for (const item of items) {
+      const codeKey = item.codigo.trim().toUpperCase();
+      const defaultItem = initialMap.get(codeKey);
+      let updated = { ...item };
+      if (defaultItem) {
+        if (!updated.documentos || updated.documentos.length === 0) {
+          updated.documentos = defaultItem.documentos;
+        }
+        if (!updated.imagemUrl && defaultItem.imagemUrl) {
+          updated.imagemUrl = defaultItem.imagemUrl;
+        }
+        if (
+          !updated.descricao ||
+          updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
+          updated.descricao.includes('(SEM DESCRIÇÃO')
+        ) {
+          updated.descricao = defaultItem.descricao;
+        }
+      }
+      mergedList.push(updated);
+      addedCodes.add(codeKey);
+    }
+
+    // 2. Add any official items from INITIAL_CATALOG_ITEMS that weren't present
+    let newCount = 0;
+    for (const initItem of INITIAL_CATALOG_ITEMS) {
+      const codeKey = initItem.codigo.trim().toUpperCase();
+      if (!addedCodes.has(codeKey)) {
+        mergedList.push(initItem);
+        addedCodes.add(codeKey);
+        newCount++;
+      }
+    }
+
+    setItems(mergedList);
+    showToast(
+      `Base oficial sincronizada! ${mergedList.length} itens disponíveis no catálogo (${newCount} novos itens adicionados).`,
+      'success',
+      'Catálogo Sincronizado'
+    );
   };
 
   // Export items to Excel (.xlsx) spreadsheet
@@ -540,6 +648,7 @@ export default function App() {
               onOpenNewModal={handleOpenNewModal}
               onOpenImportModal={() => setIsImportModalOpen(true)}
               onExport={handleExportItems}
+              onRestoreOfficialCatalog={handleRestoreOfficialCatalog}
               onEditItem={handleOpenEditModal}
               onDeleteItem={handleDeleteItem}
               onSelectItem={handleSelectItem}

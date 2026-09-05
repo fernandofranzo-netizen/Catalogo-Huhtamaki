@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Catálogo
               </div>
               <div className="text-[9px] tracking-widest text-slate-400 uppercase font-mono">
-                Manutenção // v2.4
+                Manutenção // v2.5
               </div>
             </div>
           </div>
