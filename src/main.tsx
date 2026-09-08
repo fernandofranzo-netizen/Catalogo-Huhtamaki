@@ -5,17 +5,57 @@ import './index.css';
 
 // Ensure orange CM favicon is active in browser tab
 try {
-  const svgFavicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23fbbf24"/><stop offset="100%" stop-color="%23d97706"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(%23g)"/><rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="%23fef3c7" stroke-width="1.5" stroke-opacity="0.7"/><text x="32" y="42" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="900" font-size="30" letter-spacing="-1" fill="%230b1329">CM</text></svg>`;
-  const faviconDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(svgFavicon)}`;
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Draw orange rounded rectangle
+    ctx.fillStyle = '#f59e0b';
+    const r = 14;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(64 - r, 0);
+    ctx.quadraticCurveTo(64, 0, 64, r);
+    ctx.lineTo(64, 64 - r);
+    ctx.quadraticCurveTo(64, 64, 64 - r, 64);
+    ctx.lineTo(r, 64);
+    ctx.quadraticCurveTo(0, 64, 0, 64 - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
 
-  let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    document.head.appendChild(link);
+    // Border
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Inner highlight
+    ctx.strokeStyle = 'rgba(254, 243, 199, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(3, 3, 58, 58);
+
+    // CM Text
+    ctx.fillStyle = '#0b1329';
+    ctx.font = '900 32px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CM', 32, 34);
+
+    const pngUri = canvas.toDataURL('image/png');
+
+    ['icon', 'shortcut icon', 'apple-touch-icon'].forEach((rel) => {
+      let link = document.querySelector<HTMLLinkElement>(`link[rel='${rel}']`);
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        document.head.appendChild(link);
+      }
+      link.type = 'image/png';
+      link.href = pngUri;
+    });
   }
-  link.type = 'image/svg+xml';
-  link.href = faviconDataUri;
 } catch {
   // Ignored in SSR or test environments
 }
