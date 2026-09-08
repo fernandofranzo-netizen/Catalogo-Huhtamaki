@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus } from 'lucide-react';
+import { X, Save, Plus, Camera } from 'lucide-react';
 import { CatalogItem } from '../types';
+import { ImageManagerModal } from './ImageManagerModal';
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
   const [imagemUrl, setImagemUrl] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [status, setStatus] = useState<'disponivel' | 'baixo_estoque' | 'em_revisao'>('disponivel');
+  const [showImagePicker, setShowImagePicker] = useState(false);
 
   const availableCategories = categories.filter((c) => c !== 'TODOS');
 
@@ -236,17 +238,40 @@ export const ItemModal: React.FC<ItemModalProps> = ({
 
           {/* URL da Imagem */}
           <div>
-            <label className="block font-bold text-slate-700 uppercase tracking-wider mb-1 font-mono text-[11px]">
-              URL da Imagem (opcional)
-            </label>
-            <input
-              id="input-item-imagem-url"
-              type="url"
-              value={imagemUrl}
-              onChange={(e) => setImagemUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-bold text-slate-700 uppercase tracking-wider font-mono text-[11px]">
+                Imagem do Componente (opcional)
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowImagePicker(true)}
+                className="flex items-center gap-1 text-[11px] font-mono font-bold text-amber-900 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-300 transition-colors"
+                title="Buscar imagens na web, sugestões ou fazer upload"
+              >
+                <Camera className="w-3.5 h-3.5 text-amber-600" />
+                <span>Buscar / Alterar Imagem</span>
+              </button>
+            </div>
+            <div className="flex gap-2 items-center">
+              <input
+                id="input-item-imagem-url"
+                type="url"
+                value={imagemUrl}
+                onChange={(e) => setImagemUrl(e.target.value)}
+                placeholder="https://... ou clique em 'Buscar / Alterar Imagem'"
+                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
+              />
+              {imagemUrl && (
+                <div className="w-10 h-10 rounded border border-slate-200 bg-white p-0.5 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+                  <img
+                    src={imagemUrl}
+                    alt="Preview"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain mix-blend-multiply"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Observações */}
@@ -284,6 +309,26 @@ export const ItemModal: React.FC<ItemModalProps> = ({
           </div>
         </form>
       </div>
+
+      {showImagePicker && (
+        <ImageManagerModal
+          isOpen={showImagePicker}
+          onClose={() => setShowImagePicker(false)}
+          item={{
+            id: itemToEdit ? itemToEdit.id : 'item-preview',
+            codigo: codigo.trim() || 'NOVO-ITEM',
+            descricao: descricao.trim() || 'Novo Item',
+            categoria: categoria || 'ROLAMENTOS',
+            fabricante: fabricante || undefined,
+            imagemUrl: imagemUrl || undefined,
+            palavrasChave: palavrasChaveStr.split(',').map((s) => s.trim()).filter(Boolean),
+          }}
+          onSelectUrl={(url) => {
+            setImagemUrl(url);
+            setShowImagePicker(false);
+          }}
+        />
+      )}
     </div>
   );
 };

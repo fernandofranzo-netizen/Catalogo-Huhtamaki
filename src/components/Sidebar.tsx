@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ShieldCheck, Database, Menu, X, Activity, Lock, Unlock, LogOut, UserCheck, Share2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock } from 'lucide-react';
 import { ViewMode, UserRole } from '../types';
 
 interface SidebarProps {
@@ -8,10 +8,9 @@ interface SidebarProps {
   isOpenMobile: boolean;
   onToggleMobile: () => void;
   itemCount: number;
-  userRole: UserRole;
-  onPromptGestor: () => void;
-  onLogoutGestor: () => void;
-  onShareLink?: () => void;
+  userRole?: UserRole;
+  onPromptGestor?: () => void;
+  onLogoutGestor?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -23,7 +22,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole,
   onPromptGestor,
   onLogoutGestor,
-  onShareLink,
 }) => {
   return (
     <>
@@ -69,68 +67,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation items */}
-        <div className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-          {/* User Profile / Access Mode Box */}
-          <div className="p-3 bg-slate-850/90 border border-slate-750 rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                Perfil de Acesso
+        <div className="flex-1 px-3 py-6 space-y-6 overflow-y-auto">
+          {userRole === 'gestor' && (
+            <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center justify-between text-[11px] font-mono text-amber-300">
+              <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Modo Gestor
               </span>
-              {userRole === 'gestor' ? (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono">
-                  <Unlock className="w-2.5 h-2.5" /> Gestor
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
-                  <UserCheck className="w-2.5 h-2.5" /> Manutentor
-                </span>
-              )}
+              <span className="text-[10px] text-amber-400/80 font-mono">ATIVO</span>
             </div>
-
-            <p className="text-[11px] text-slate-300 leading-tight">
-              {userRole === 'gestor'
-                ? 'Acesso total para cadastrar peças, editar dados e anexar data-sheets.'
-                : 'Modo consulta livre: busca rápida de códigos e abertura de data-sheets.'}
-            </p>
-
-            {userRole === 'gestor' ? (
-              <button
-                type="button"
-                onClick={onLogoutGestor}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700/80 rounded border border-slate-700 transition-colors"
-              >
-                <LogOut className="w-3 h-3 text-slate-400" />
-                <span>Bloquear / Sair do Gestor</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onPromptGestor}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 text-[11px] font-bold text-slate-950 bg-[#f59e0b] hover:bg-[#d97706] rounded shadow-xs transition-colors"
-              >
-                <Lock className="w-3 h-3 text-slate-950" />
-                <span>Acessar como Gestor</span>
-              </button>
-            )}
-
-            {onShareLink && (
-              <button
-                type="button"
-                onClick={onShareLink}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 text-[11px] font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded border border-slate-700/80 transition-colors"
-                title="Copiar link de acesso para a equipe"
-              >
-                <Share2 className="w-3 h-3 text-amber-400" />
-                <span>Compartilhar Link</span>
-              </button>
-            )}
-          </div>
+          )}
 
           <div>
-            <div className="px-3 mb-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-              Navegação
+            <div className="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono">
+              NAVEGAÇÃO
             </div>
-            <nav className="space-y-1">
+            <nav className="space-y-1.5">
               <button
                 id="nav-btn-consulta"
                 type="button"
@@ -140,15 +92,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`flex items-center justify-between w-full px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                   currentView === 'catalog' || currentView === 'detail'
-                    ? 'bg-slate-800/90 text-white border-l-4 border-cyan-400'
-                    : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                    ? 'bg-slate-850 text-white border-l-4 border-cyan-400 shadow-xs'
+                    : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Search className="w-4 h-4 text-cyan-400" />
-                  <span>Consulta de Itens</span>
+                  <span>Consulta de itens</span>
                 </div>
-                <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium text-slate-400 bg-slate-850 rounded">
+                <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium text-slate-400 bg-slate-800 rounded">
                   {itemCount}
                 </span>
               </button>
@@ -157,52 +109,65 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 id="nav-btn-admin"
                 type="button"
                 onClick={() => {
-                  if (userRole === 'gestor') {
-                    onNavigate('admin');
-                  } else {
-                    onPromptGestor();
-                  }
+                  onNavigate('admin');
                   if (isOpenMobile) onToggleMobile();
                 }}
                 className={`flex items-center justify-between w-full px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                   currentView === 'admin'
-                    ? 'bg-slate-800/90 text-white border-l-4 border-[#f59e0b]'
-                    : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                    ? 'bg-slate-850 text-white border-l-4 border-[#f59e0b] shadow-xs'
+                    : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-4 h-4 text-[#f59e0b]" />
+                  <SlidersHorizontal className="w-4 h-4 text-[#f59e0b]" />
                   <span>Administração</span>
                 </div>
-                {userRole === 'gestor' ? (
-                  <span className="text-[10px] font-medium text-amber-400/90 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-800/40">
-                    Gestão
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-mono font-medium text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                    <Lock className="w-2.5 h-2.5 text-amber-500" />
-                    PIN
-                  </span>
-                )}
               </button>
             </nav>
           </div>
+
+          <div className="pt-2 px-1 space-y-2">
+            {userRole === 'gestor' ? (
+              <button
+                id="btn-sidebar-sair-gestor"
+                type="button"
+                onClick={() => {
+                  onLogoutGestor?.();
+                  if (isOpenMobile) onToggleMobile();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900/60 rounded-lg border border-rose-800/50 transition-colors shadow-xs"
+                title="Sair do modo gestor e retornar para consulta de manutentor"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Sair do modo gestor</span>
+              </button>
+            ) : (
+              <button
+                id="btn-sidebar-prompt-gestor"
+                type="button"
+                onClick={() => {
+                  onPromptGestor?.();
+                  if (isOpenMobile) onToggleMobile();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-slate-400 hover:text-amber-300 bg-slate-850/60 hover:bg-slate-850 rounded-lg border border-slate-800 transition-colors"
+                title="Acessar painel de edição do gestor"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400/80" />
+                <span>Acesso Gestor</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Footer Status */}
+        {/* Footer Status - AMBIENTE INTERNO matching reference image */}
         <div className="p-4 border-t border-slate-800/80 bg-[#090f20]">
-          <div className="flex items-center gap-2.5 text-xs text-slate-300">
-            <span className="relative flex w-2.5 h-2.5">
-              <span className="absolute inline-flex w-full h-full bg-emerald-400 rounded-full opacity-75 animate-ping"></span>
-              <span className="relative inline-flex w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
-            </span>
-            <div className="flex flex-col">
-              <span className="font-semibold text-slate-200">Serviço operacional</span>
-              <span className="text-[10px] text-slate-400">Banco de dados sincronizado</span>
-            </div>
+          <div className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-slate-400 uppercase">
+            <Shield className="w-3.5 h-3.5 text-cyan-400/80" />
+            <span>AMBIENTE INTERNO</span>
           </div>
         </div>
       </aside>
     </>
   );
 };
+

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Copy, Check, Edit3, Tag, MapPin, Building2, Ruler, ShieldAlert, FileText, ExternalLink, Plus, Trash2, Lock } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Edit3, Tag, MapPin, Building2, Ruler, ShieldAlert, FileText, ExternalLink, Plus, Trash2, Lock, Camera, Sparkles } from 'lucide-react';
 import { CatalogItem, TechnicalDocument, UserRole } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
 
@@ -12,6 +12,7 @@ interface ItemDetailProps {
   onOpenDocuments: (item: CatalogItem) => void;
   userRole: UserRole;
   onPromptGestor?: () => void;
+  onOpenImageManager?: (item: CatalogItem) => void;
 }
 
 export const ItemDetail: React.FC<ItemDetailProps> = ({
@@ -23,6 +24,7 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
   onOpenDocuments,
   userRole,
   onPromptGestor,
+  onOpenImageManager,
 }) => {
   const [copied, setCopied] = useState(false);
   const docs = item.documentos || [];
@@ -65,6 +67,20 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
 
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          {/* Botão de Incluir / Alterar Imagem */}
+          {onOpenImageManager && (
+            <button
+              id="btn-detail-manage-image"
+              type="button"
+              onClick={() => onOpenImageManager(item)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-800 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 rounded-md shadow-xs transition-colors"
+              title="Incluir, alterar ou substituir imagem deste componente"
+            >
+              <Camera className="w-4 h-4 text-amber-600" />
+              <span>{item.imagemUrl ? 'Substituir Foto' : 'Incluir Imagem'}</span>
+            </button>
+          )}
+
           {/* Botão de Documentação Técnica / Data-sheet */}
           <button
             id="btn-detail-documents"
@@ -120,24 +136,46 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
 
       {/* Two Column Layout: Visual vs Identification Specs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Visual / Image Container */}
+        {/* Left Column: Visual / Image Container with click to change */}
         <div className="lg:col-span-6 flex flex-col">
-          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px]">
+          <div
+            id="container-detail-image-box"
+            onClick={() => onOpenImageManager?.(item)}
+            className="group relative bg-white border border-slate-200 hover:border-amber-400 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px] cursor-pointer transition-all"
+            title="Clique para incluir, alterar ou substituir a foto deste item"
+          >
             {item.imagemUrl ? (
-              <div className="w-full h-80 flex items-center justify-center p-4">
+              <div className="w-full h-80 flex items-center justify-center p-4 relative">
                 <img
                   src={item.imagemUrl}
                   alt={item.descricao}
                   referrerPolicy="no-referrer"
-                  className="max-h-full max-w-full object-contain mix-blend-multiply"
+                  className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-105"
                 />
               </div>
             ) : (
-              <TechnicalPlaceholder size="lg" className="w-full h-80 border-0 bg-transparent" />
+              <div className="w-full h-80 flex flex-col items-center justify-center relative">
+                <TechnicalPlaceholder size="lg" className="w-full h-full border-0 bg-transparent" />
+                <div className="mt-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-900 rounded text-xs font-mono font-bold flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Clique para incluir foto deste item</span>
+                </div>
+              </div>
             )}
+
+            {/* Hover overlay hint */}
+            <div className="absolute top-3 right-3 opacity-90 group-hover:opacity-100 transition-opacity">
+              <span className="px-2.5 py-1 bg-slate-900/80 hover:bg-slate-900 text-white rounded text-[11px] font-mono font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-xs">
+                <Camera className="w-3 h-3 text-amber-400" />
+                <span>{item.imagemUrl ? 'Substituir foto' : 'Adicionar foto'}</span>
+              </span>
+            </div>
+
             <div className="w-full pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
               <span>VISUAL TÉCNICO // REF. CAD</span>
-              <span>{item.imagemUrl ? 'FOTO REAL / REVISADA' : 'ESQUEMA TÉCNICO'}</span>
+              <span className="text-amber-700/80 font-bold group-hover:text-amber-800">
+                {item.imagemUrl ? 'CLIQUE P/ SUBSTITUIR' : 'CLIQUE P/ INCLUIR IMAGEM'}
+              </span>
             </div>
           </div>
         </div>

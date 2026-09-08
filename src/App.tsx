@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Menu, Plus, Lock } from 'lucide-react';
+import { Menu, Plus, Lock, LogOut } from 'lucide-react';
 import { CatalogItem, ViewMode, TechnicalDocument, UserRole } from './types';
 import { INITIAL_CATALOG_ITEMS, CATEGORIAS_PADRAO } from './data/initialCatalog';
 import { Sidebar } from './components/Sidebar';
@@ -16,6 +16,7 @@ import { ImportModal } from './components/ImportModal';
 import { DocumentModal } from './components/DocumentModal';
 import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
+import { ImageManagerModal } from './components/ImageManagerModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 const STORAGE_KEY = 'cm_catalog_items_v4';
@@ -54,6 +55,8 @@ export default function App() {
   const [itemToEdit, setItemToEdit] = useState<CatalogItem | null>(null);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   const [documentModalItem, setDocumentModalItem] = useState<CatalogItem | null>(null);
+  const [isImageManagerOpen, setIsImageManagerOpen] = useState(false);
+  const [imageManagerItem, setImageManagerItem] = useState<CatalogItem | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -251,6 +254,30 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Open Image Manager (search web suggestions, upload, or paste URL)
+  const handleOpenImageManager = (item: CatalogItem) => {
+    setImageManagerItem(item);
+    setIsImageManagerOpen(true);
+  };
+
+  // Save/Replace Image for an item
+  const handleSaveItemImage = (itemId: string, newImageUrl?: string) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id === itemId) {
+          return { ...item, imagemUrl: newImageUrl };
+        }
+        return item;
+      })
+    );
+
+    if (selectedItem && selectedItem.id === itemId) {
+      setSelectedItem((prev) => (prev ? { ...prev, imagemUrl: newImageUrl } : null));
+    }
+
+    showToast('Imagem do componente atualizada com sucesso!', 'success');
+  };
+
   // Import items
   const handleImportItems = (newItems: CatalogItem[]) => {
     setItems((prev) => {
@@ -301,7 +328,6 @@ export default function App() {
         userRole={userRole}
         onPromptGestor={handlePromptGestor}
         onLogoutGestor={handleLogoutGestor}
-        onShareLink={handleShareLink}
       />
 
       {/* Mobile Top Navigation Bar */}
@@ -328,14 +354,25 @@ export default function App() {
 
         <div className="flex items-center gap-2">
           {userRole === 'gestor' ? (
-            <button
-              type="button"
-              onClick={handleOpenNewModal}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-slate-950 bg-[#f59e0b] rounded shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Novo</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleOpenNewModal}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-slate-950 bg-[#f59e0b] rounded shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Novo</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleLogoutGestor}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-rose-300 bg-rose-950/60 border border-rose-800/60 rounded shadow-xs"
+                title="Sair do modo gestor"
+              >
+                <LogOut className="w-3 h-3 text-rose-400" />
+                <span>Sair</span>
+              </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -363,6 +400,8 @@ export default function App() {
               onOpenDocuments={handleOpenDocuments}
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
+              onLogoutGestor={handleLogoutGestor}
+              onOpenImageManager={handleOpenImageManager}
             />
           )}
 
@@ -376,6 +415,7 @@ export default function App() {
               onOpenDocuments={handleOpenDocuments}
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
+              onOpenImageManager={handleOpenImageManager}
             />
           )}
 
@@ -395,6 +435,8 @@ export default function App() {
               onOpenChangePin={() => setIsAuthModalOpen(true)}
               onLogoutGestor={handleLogoutGestor}
               onShareLink={handleShareLink}
+              onBackToCatalog={() => setCurrentView('catalog')}
+              onOpenImageManager={handleOpenImageManager}
             />
           )}
         </div>
@@ -453,6 +495,19 @@ export default function App() {
           )
         }
       />
+
+      {/* Image Manager Modal (Web suggestions, upload, URL) */}
+      {isImageManagerOpen && imageManagerItem && (
+        <ImageManagerModal
+          isOpen={isImageManagerOpen}
+          onClose={() => {
+            setIsImageManagerOpen(false);
+            setImageManagerItem(null);
+          }}
+          item={imageManagerItem}
+          onSaveImage={handleSaveItemImage}
+        />
+      )}
 
       {/* Floating Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

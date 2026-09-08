@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, ArrowRight, FileText } from 'lucide-react';
+import { Copy, Check, ArrowRight, FileText, Camera } from 'lucide-react';
 import { CatalogItem } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
 
@@ -9,6 +9,7 @@ interface ItemCardProps {
   onToggleFavorite?: (id: string) => void;
   onCopySuccess: (code: string) => void;
   onOpenDocuments?: (item: CatalogItem) => void;
+  onOpenImageManager?: (item: CatalogItem) => void;
 }
 
 export const ItemCard: React.FC<ItemCardProps> = ({
@@ -16,6 +17,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   onSelect,
   onCopySuccess,
   onOpenDocuments,
+  onOpenImageManager,
 }) => {
   const [copied, setCopied] = useState(false);
   const docCount = item.documentos ? item.documentos.length : 0;
@@ -26,6 +28,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     setCopied(true);
     onCopySuccess(item.codigo);
     setTimeout(() => setCopied(false), 1800);
+  };
+
+  const handleManageImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenImageManager?.(item);
   };
 
   return (
@@ -43,7 +50,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         </div>
 
         {/* Image / Blueprint Graphic */}
-        <div className="flex items-center justify-center w-full h-40 mb-3.5 bg-slate-50 border border-slate-100 rounded-md overflow-hidden p-2 group-hover:bg-slate-100/60 transition-colors">
+        <div className="relative flex items-center justify-center w-full h-44 mb-3.5 bg-slate-50 bg-card-grid border border-slate-200/80 rounded-sm overflow-hidden p-3 group-hover:border-slate-300 transition-colors">
           {item.imagemUrl ? (
             <img
               src={item.imagemUrl}
@@ -59,6 +66,22 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           ) : (
             <TechnicalPlaceholder size="md" className="w-full h-full border-0 bg-transparent" />
           )}
+
+          {/* Camera / Edit Image Quick Button */}
+          {onOpenImageManager && (
+            <button
+              type="button"
+              onClick={handleManageImage}
+              className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-slate-700 hover:text-amber-600 border border-slate-200 rounded-md shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Incluir ou alterar imagem deste componente"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          <div className="absolute bottom-1.5 left-0 right-0 text-center text-[9px] font-mono tracking-widest text-slate-400 uppercase pointer-events-none">
+            VISTA DE REFERÊNCIA
+          </div>
         </div>
 
         {/* Item Code (Prominent Monospace) */}
