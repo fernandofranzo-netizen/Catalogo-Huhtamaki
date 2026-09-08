@@ -39,17 +39,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header with Logo */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800/80">
+        {/* Header with Logo restored to CM badge converted to Huhtamaki colors */}
+        <div className="flex items-center justify-between p-5 border-b border-slate-800/80 bg-[#080e1f]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 font-black text-slate-950 bg-[#f59e0b] rounded-md shadow-sm">
+            <div className="flex items-center justify-center w-10 h-10 font-black text-white bg-gradient-to-br from-[#3F78CC] to-[#1A3282] rounded-lg shadow-sm border border-[#3F78CC]/30 tracking-tight text-base">
               CM
             </div>
             <div>
               <div className="text-base font-extrabold tracking-wider text-white uppercase">
                 Catálogo
               </div>
-              <div className="text-[10px] tracking-widest text-slate-400 uppercase font-mono">
+              <div className="text-[10px] tracking-widest text-[#3F78CC] uppercase font-mono font-semibold">
                 Manutenção // v2.4
               </div>
             </div>
@@ -92,12 +92,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`flex items-center justify-between w-full px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                   currentView === 'catalog' || currentView === 'detail'
-                    ? 'bg-slate-850 text-white border-l-4 border-cyan-400 shadow-xs'
+                    ? 'bg-slate-850 text-white border-l-4 border-[#3f78cc] shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Search className="w-4 h-4 text-cyan-400" />
+                  <Search className="w-4 h-4 text-[#3f78cc]" />
                   <span>Consulta de itens</span>
                 </div>
                 <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium text-slate-400 bg-slate-800 rounded">
@@ -165,11 +165,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Footer Status - AMBIENTE INTERNO matching reference image */}
+        {/* Footer Status - AMBIENTE INTERNO HUHTAMAKI */}
         <div className="p-4 border-t border-slate-800/80 bg-[#090f20]">
           <div className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-slate-400 uppercase">
-            <Shield className="w-3.5 h-3.5 text-cyan-400/80" />
-            <span>AMBIENTE INTERNO</span>
+            <Shield className="w-3.5 h-3.5 text-[#3f78cc]" />
+            <span>HUHTAMAKI // USO INTERNO</span>
           </div>
         </div>
       </aside>

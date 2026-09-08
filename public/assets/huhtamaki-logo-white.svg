@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 100" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&amp;display=swap');
+      .huhta-white { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; fill: #FFFFFF; }
+      .huhta-cyan { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; fill: #4B88E4; }
+    </style>
+  </defs>
+  <text x="4" y="74" font-size="76" letter-spacing="-1.5">
+    <tspan class="huhta-white">Huhta</tspan><tspan class="huhta-cyan">maki</tspan>
+  </text>
+</svg>

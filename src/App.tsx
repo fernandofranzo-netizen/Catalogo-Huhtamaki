@@ -353,19 +353,19 @@ export default function App() {
       />
 
       {/* Mobile Top Navigation Bar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between p-3 bg-[#0b1329] border-b border-slate-800 md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between p-2.5 bg-[#080e1f] border-b border-slate-800 md:hidden">
         <div className="flex items-center gap-2.5">
           <button
             id="btn-open-sidebar-mobile"
             type="button"
             onClick={() => setIsMobileSidebarOpen(true)}
-            className="p-1.5 text-slate-300 rounded hover:bg-slate-800"
+            className="p-1.5 text-slate-300 rounded hover:bg-slate-850"
             aria-label="Abrir menu lateral"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-7 h-7 font-black text-xs text-slate-950 bg-[#f59e0b] rounded">
+            <span className="flex items-center justify-center w-7 h-7 font-black text-xs text-white bg-gradient-to-br from-[#3F78CC] to-[#1A3282] rounded shadow-xs">
               CM
             </span>
             <span className="font-extrabold text-sm text-white tracking-wider uppercase">

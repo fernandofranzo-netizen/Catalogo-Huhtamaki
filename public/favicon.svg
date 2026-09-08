@@ -1,14 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="cmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#d97706"/>
-    </linearGradient>
-  </defs>
-  <!-- Background Orange Badge -->
-  <rect width="64" height="64" rx="14" fill="url(#cmGrad)"/>
-  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#fef3c7" stroke-width="1.5" stroke-opacity="0.7"/>
-  
-  <!-- Monogram CM -->
-  <text x="32" y="42" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="30" letter-spacing="-1" fill="#0b1329">CM</text>
+  <rect width="64" height="64" rx="14" fill="#1A3282"/>
+  <path d="M18 16h8v12h12V16h8v32h-8V34H26v14h-8V16z" fill="#FFFFFF"/>
+  <circle cx="46" cy="18" r="4" fill="#3F78CC"/>
 </svg>

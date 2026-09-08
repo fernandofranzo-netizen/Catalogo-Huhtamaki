@@ -91,19 +91,41 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
+      {/* Top Header with Huhtamaki Branding */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-cyan-700 uppercase font-mono mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 inline-block"></span>
-            <span>BUSCA OPERACIONAL</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-[#1A3282] uppercase font-mono mb-1">
+            <span className="w-2 h-2 rounded-full bg-[#3F78CC] inline-block animate-pulse"></span>
+            <span>HUHTAMAKI // MANUTENÇÃO INDUSTRIAL</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 uppercase">
-            LOCALIZAR ITEM
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A3282] uppercase">
+            LOCALIZAR ITEM TÉCNICO
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-2xl">
-            Encontre o código certo antes de abrir o painel. Pesquise por código, descrição ou palavra-chave.
+            Encontre o código oficial, dimensões e localização física no almoxarifado antes de abrir a requisição.
           </p>
+        </div>
+
+        {/* Huhtamaki Plant Tag */}
+        <div className="hidden sm:flex items-center">
+          <div className="bg-white border border-slate-200/90 rounded-lg px-4 py-2.5 shadow-xs flex items-center gap-4">
+            <div className="flex items-center justify-center select-none py-0.5">
+              <span className="font-extrabold text-[22px] sm:text-[24px] tracking-tight leading-none" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <span className="text-[#1A3282]">Huhta</span>
+                <span className="text-[#3F78CC]">maki</span>
+              </span>
+            </div>
+            <div className="h-9 w-px bg-slate-200" aria-hidden="true" />
+            <div className="text-right flex flex-col justify-center">
+              <div className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                UNIDADE INDUSTRIAL
+              </div>
+              <div className="text-[11px] font-mono font-bold text-[#1A3282] uppercase leading-tight mt-0.5">
+                <div>ALMOXARIFADO</div>
+                <div>MANUTENÇÃO</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -118,8 +140,8 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Código, descrição ou palavra-chave..."
-              className="w-full pl-9.5 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 font-sans"
+              placeholder="Código, descrição ou palavra-chave (ex: 6204, SKF, M8, Festo)..."
+              className="w-full pl-9.5 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-2 focus:ring-[#3F78CC]/30 focus:border-[#1A3282] font-sans"
             />
             {searchTerm && (
               <button
@@ -138,7 +160,7 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
               id="select-category-catalog"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full py-2.5 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500 text-slate-700 font-medium"
+              className="w-full py-2.5 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-2 focus:ring-[#3F78CC]/30 focus:border-[#1A3282] text-slate-700 font-medium"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -149,7 +171,7 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
           </div>
         </div>
 
-        {/* Category Wrap Pills matching reference screenshot */}
+        {/* Category Wrap Pills matching Huhtamaki brand colors */}
         <div className="pt-2.5 border-t border-slate-100">
           <div className="flex flex-wrap items-center gap-1.5">
             {categories.map((cat) => {
@@ -162,7 +184,7 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-1 text-[11px] font-mono font-bold uppercase rounded-xs tracking-wider transition-all border ${
                     isActive
-                      ? 'bg-[#247d8f] hover:bg-[#1e6f7f] text-white border-[#1f6f7f] shadow-xs'
+                      ? 'bg-[#1A3282] hover:bg-[#152869] text-white border-[#152869] shadow-xs'
                       : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300'
                   }`}
                 >

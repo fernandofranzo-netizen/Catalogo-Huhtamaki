@@ -55,10 +55,15 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
       {/* Main Header with Code & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
         <div className="space-y-1.5">
-          <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-cyan-800 bg-cyan-50 border border-cyan-200 rounded uppercase font-mono">
-            {item.categoria}
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900">
+          <div className="flex items-center gap-2">
+            <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded uppercase font-mono">
+              {item.categoria}
+            </span>
+            <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+              HUHTAMAKI // ITEM TÉCNICO
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-[#1A3282]">
             {item.codigo}
           </h1>
           <p className="text-sm sm:text-base text-slate-600 max-w-3xl font-medium">

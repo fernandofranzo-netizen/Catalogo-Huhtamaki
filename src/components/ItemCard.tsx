@@ -105,13 +105,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
         {/* Category Badge placed below the image box */}
         <div className="mb-2">
-          <span className="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#0e7490] bg-[#f0fdfa] border border-[#a5f3fc] rounded-xs uppercase font-mono">
+          <span className="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded-xs uppercase font-mono">
             {item.categoria}
           </span>
         </div>
 
         {/* Item Code (Prominent Monospace) */}
-        <div className="font-mono text-sm sm:text-base font-bold tracking-wide text-slate-900 group-hover:text-[#0e7490] transition-colors">
+        <div className="font-mono text-sm sm:text-base font-bold tracking-wide text-slate-900 group-hover:text-[#1A3282] transition-colors">
           {item.codigo}
         </div>
 

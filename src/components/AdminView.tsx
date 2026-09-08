@@ -118,12 +118,12 @@ export const AdminView: React.FC<AdminViewProps> = ({
           )}
 
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 text-[10px] font-bold font-mono tracking-widest text-cyan-800 bg-cyan-50 border border-cyan-200/80 rounded uppercase">
-              CONSOLE DE CATÁLOGO
+            <span className="px-2 py-0.5 text-[10px] font-bold font-mono tracking-widest text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded uppercase">
+              HUHTAMAKI // CONSOLE DE GESTÃO DO CATÁLOGO
             </span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 uppercase">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A3282] uppercase">
             ADMINISTRAÇÃO
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-2xl">
