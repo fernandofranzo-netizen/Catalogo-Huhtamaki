@@ -146,7 +146,7 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
               <div
                 id="container-detail-image-box"
                 onClick={isGestor ? () => onOpenImageManager?.(item) : undefined}
-                className={`group relative bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px] transition-all ${
+                className={`group relative bg-[#f8fafc] bg-card-grid border border-slate-200/90 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px] transition-all ${
                   isGestor ? 'hover:border-amber-400 cursor-pointer' : ''
                 }`}
                 title={isGestor ? 'Clique para incluir, alterar ou substituir a foto deste item' : 'Visualização técnica de engenharia (modo consulta)'}
@@ -156,7 +156,7 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
                     src={displayUrl}
                     alt={item.descricao}
                     referrerPolicy="no-referrer"
-                    className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-200 ${
+                    className={`max-h-full max-w-full object-contain transition-transform duration-200 ${
                       isGestor ? 'group-hover:scale-105' : ''
                     }`}
                     onError={(e) => {

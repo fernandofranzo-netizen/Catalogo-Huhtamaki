@@ -105,12 +105,6 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
             Encontre o código certo antes de abrir o painel. Pesquise por código, descrição ou palavra-chave.
           </p>
         </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-center">
-          <div className="px-3 py-1.5 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-slate-700 tracking-wider">
-            {items.length} ITENS
-          </div>
-        </div>
       </div>
 
       {/* Main Search & Control Bar */}
@@ -166,9 +160,9 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                   id={`btn-cat-chip-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase rounded-xs tracking-wider transition-all border ${
+                  className={`px-3 py-1 text-[11px] font-mono font-bold uppercase rounded-xs tracking-wider transition-all border ${
                     isActive
-                      ? 'bg-cyan-850 text-white border-cyan-900 shadow-xs'
+                      ? 'bg-[#247d8f] hover:bg-[#1e6f7f] text-white border-[#1f6f7f] shadow-xs'
                       : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300'
                   }`}
                 >

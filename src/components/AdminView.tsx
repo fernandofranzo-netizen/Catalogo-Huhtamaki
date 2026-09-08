@@ -461,7 +461,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 }}
                 className={`w-full flex items-center justify-between py-1.5 px-2.5 text-xs font-mono rounded transition-colors ${
                   selectedCategory === 'TODOS'
-                    ? 'bg-slate-900 text-white font-bold'
+                    ? 'bg-[#247d8f] text-white font-bold'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >

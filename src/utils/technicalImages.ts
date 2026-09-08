@@ -278,47 +278,57 @@ export function resolveItemImage(item: { codigo?: string; descricao?: string; ca
 
   // 0. Facas circulares / contra-facas industriais
   if (/CONTRA[- ]?FACA|FACA CIRCULAR|FACA ROTATIVA|LAMINA CIRCULAR|BILSTEIN/i.test(all)) {
-    return '/assets/components/faca-circular.svg';
+    return '/assets/photos/faca-circular-rotativa.jpg';
   }
 
   // 1. Anel Elástico (Circlip / Seeger DIN 471 / DIN 472)
   if (/ANEL ELAST|ANEL.*EXTERNO|ANEL.*INTERNO|SEEGER|DIN 471|DIN 472|ANEIS/i.test(all)) {
-    return '/assets/components/anel-elastico.svg';
+    return '/assets/photos/anel-seeger-din471.jpg';
   }
 
-  // 2. Rolamentos de esferas e rolos
-  if (/ROLAMENTO|6204|63\/28|MANCAL|BEARING/i.test(all)) {
-    return '/assets/components/rolamento.svg';
+  // 2. Rolamentos de Rolos Cônicos (SKF 30208 / Conicos)
+  if (/ROLO.*CONIC|CONIC|30208|3200|3220/i.test(all)) {
+    return '/assets/photos/skf-tapered-roller-30208.jpg';
   }
 
-  // 3. Buchas Guia
+  // 3. Rolamentos Blindados Metálicos (SKF 6306 ZZ / 2Z)
+  if (/(ZZ|2Z|6306|BLINDAD.*METAL)/i.test(all)) {
+    return '/assets/photos/skf-shielded-bearing-6306.jpg';
+  }
+
+  // 4. Rolamentos Fixos de Esferas (SKF 6204 2RSL / 2RS / Esferas / Rolamento Geral)
+  if (/ROLAMENTO|6204|63\/28|MANCAL|BEARING|ESFERA/i.test(all)) {
+    return '/assets/photos/skf-ball-bearing-cutaway.jpg';
+  }
+
+  // 5. Buchas Guia
   if (/BUCHA.*GUIA|BUCHA/i.test(all)) {
     return '/assets/components/bucha-guia.svg';
   }
 
-  // 4. Pinos Guia e Elásticos
+  // 6. Pinos Guia e Elásticos
   if (/PINO.*ELAST|PINO.*GUIA|PINO.*TEMPERAD|PINO.*CONICO|PINOS/i.test(all)) {
     return '/assets/components/pino-guia.svg';
   }
 
-  // 5. Parafuso Allen Escareado
+  // 7. Parafuso Allen Escareado
   if (/ESCAREAD|DIN 7991/i.test(all)) {
     return '/assets/components/parafuso-allen-escareado.svg';
   }
 
-  // 6. Parafuso Allen Abaulado
+  // 8. Parafuso Allen Abaulado
   if (/ABAULAD|ISO 7380/i.test(all)) {
     return '/assets/components/parafuso-allen-abaulado.svg';
   }
 
-  // 7. Parafuso Allen Sem Cabeça (Bujão / Set screw)
+  // 9. Parafuso Allen Sem Cabeça (Bujão / Set screw)
   if (/SEM CABECA|SEM\/CAB|BUJAO|DIN 913|DIN 914|DIN 916/i.test(all)) {
     return '/assets/components/parafuso-sem-cabeca.svg';
   }
 
-  // 8. Parafuso Allen Cabeça Cilíndrica
+  // 10. Parafuso Allen Cabeça Cilíndrica (DIN 912)
   if (/ALLEN|DIN 912|ISO 4762/i.test(all)) {
-    return '/assets/components/parafuso-allen-cilindrico.svg';
+    return '/assets/photos/parafuso-allen-din912.jpg';
   }
 
   // 9. Parafuso Cabeça Sextavada
@@ -373,12 +383,12 @@ export function resolveItemImage(item: { codigo?: string; descricao?: string; ca
 
   // 19. Sensores Indutivos e Instrumentação
   if (/SENSOR.*INDUT|SENSOR.*PROX|BALLUFF|M12.*PNP|M18/i.test(all)) {
-    return '/assets/components/sensor-indutivo.svg';
+    return '/assets/photos/sensor-indutivo-m12.jpg';
   }
 
   // 20. Válvulas Solenoide e Manifolds
   if (/VALVULA.*SOLEN|VALVULA.*PNEUM|MANIFOLD|BLOCO DE VALVULA|PRE-SELETOR.*DALMEC/i.test(all)) {
-    return '/assets/components/valvula-pneumatica.svg';
+    return '/assets/photos/valvula-solenoide-festo.jpg';
   }
 
   // 21. Cilindros e Atuadores Pneumáticos

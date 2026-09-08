@@ -19,7 +19,7 @@ import { ShareModal } from './components/ShareModal';
 import { ImageManagerModal } from './components/ImageManagerModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v6';
+const STORAGE_KEY = 'cm_catalog_items_v7';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
