@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Menu, Plus, Lock, AlertTriangle } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Menu, Plus, Lock } from 'lucide-react';
 import { CatalogItem, ViewMode, TechnicalDocument, UserRole } from './types';
 import { INITIAL_CATALOG_ITEMS, CATEGORIAS_PADRAO } from './data/initialCatalog';
 import { Sidebar } from './components/Sidebar';
@@ -19,152 +18,35 @@ import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v8';
+const STORAGE_KEY = 'cm_catalog_items_v4';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
-// Function to reliably recover and merge items across all previous and current storage keys
-function loadAndMergeCatalog(): CatalogItem[] {
-  try {
-    // 1. Identify all candidate localStorage keys (v8, v7, v6, v5, v4, v3, v2, v1, etc.)
-    const candidateKeys = [
-      'cm_catalog_items_v8',
-      'cm_catalog_items_v7',
-      'cm_catalog_items_v6',
-      'cm_catalog_items_v5',
-      'cm_catalog_items_v4',
-      'cm_catalog_items_v3',
-      'cm_catalog_items_v2',
-      'cm_catalog_items_v1',
-      'cm_catalog_items',
-      'catalog_items',
-    ];
-
-    // Dynamically check any other key in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (
-        k &&
-        (k.includes('catalog') || k.includes('item')) &&
-        !candidateKeys.includes(k) &&
-        k !== PIN_STORAGE_KEY &&
-        k !== ROLE_STORAGE_KEY
-      ) {
-        candidateKeys.push(k);
-      }
-    }
-
-    // Map to hold items extracted from previous user sessions
-    const userSavedItemsMap = new Map<string, CatalogItem>();
-
-    // Reverse so newer keys take precedence for edited fields
-    for (const key of [...candidateKeys].reverse()) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            for (const it of parsed) {
-              if (it && it.codigo && typeof it.codigo === 'string') {
-                const codeKey = it.codigo.trim().toUpperCase();
-                const existing = userSavedItemsMap.get(codeKey);
-                if (!existing) {
-                  userSavedItemsMap.set(codeKey, it);
-                } else {
-                  userSavedItemsMap.set(codeKey, {
-                    ...existing,
-                    ...it,
-                    documentos:
-                      it.documentos && it.documentos.length > 0
-                        ? it.documentos
-                        : existing.documentos,
-                    imagemUrl: it.imagemUrl || existing.imagemUrl,
-                    favorito: it.favorito ?? existing.favorito,
-                  });
-                }
-              }
+export default function App() {
+  const [items, setItems] = useState<CatalogItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= INITIAL_CATALOG_ITEMS.length) {
+          return parsed;
+        }
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const parsedCodeMap = new Map(parsed.map((item: CatalogItem) => [item.codigo, item]));
+          const merged = [...parsed];
+          for (const initItem of INITIAL_CATALOG_ITEMS) {
+            if (!parsedCodeMap.has(initItem.codigo)) {
+              merged.push(initItem);
             }
           }
+          return merged;
         }
-      } catch {
-        // Continue scanning remaining candidate keys
       }
+    } catch (e) {
+      console.warn('Failed to parse saved items from localStorage', e);
     }
-
-    // Now merge with INITIAL_CATALOG_ITEMS (which has the complete 1,106 items from the catalog)
-    const initialMap = new Map(
-      INITIAL_CATALOG_ITEMS.map((i) => [i.codigo.trim().toUpperCase(), i])
-    );
-    const mergedList: CatalogItem[] = [];
-    const processedCodes = new Set<string>();
-
-    // 1. Process all user-saved items first to retain any custom descriptions, images, docs, or locations
-    for (const [codeKey, userItem] of userSavedItemsMap.entries()) {
-      const defaultItem = initialMap.get(codeKey);
-      const updated: CatalogItem = { ...userItem };
-      updated.codigo = updated.codigo.trim();
-
-      // Specific fix for user's Kampf brake disc
-      if (codeKey === 'MM-REPOS-00213-00') {
-        updated.descricao = 'DISCO DE FREIO COMPLETO KAMPF 877041685';
-        updated.categoria = 'PEÇAS DE MÁQUINA / REPOSIÇÃO';
-        updated.fabricante = 'KAMPF';
-        updated.dimensao = 'P/N 877041685';
-        updated.imagemUrl = '/assets/images/kampf_brake_disc_1788575763351.jpg';
-      }
-
-      // Preserve or set technical documents
-      if (!updated.documentos || updated.documentos.length === 0) {
-        updated.documentos = defaultItem?.documentos && defaultItem.documentos.length > 0
-          ? defaultItem.documentos
-          : [];
-      }
-
-      // Sync high-quality image if item doesn't have one or has generic fallback
-      if (
-        (!updated.imagemUrl || updated.imagemUrl.includes('bearing_skf_6204_1788569544706')) &&
-        defaultItem?.imagemUrl
-      ) {
-        updated.imagemUrl = defaultItem.imagemUrl;
-      }
-
-      // Auto-heal empty or repeated code descriptions with official catalog description
-      if (
-        (!updated.descricao ||
-          updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
-          updated.descricao.includes('(SEM DESCRIÇÃO')) &&
-        defaultItem?.descricao
-      ) {
-        updated.descricao = defaultItem.descricao;
-        if (defaultItem.categoria && (!updated.categoria || updated.categoria === 'OUTROS / REPOSIÇÃO')) {
-          updated.categoria = defaultItem.categoria;
-        }
-        if (defaultItem.fabricante && !updated.fabricante) updated.fabricante = defaultItem.fabricante;
-        if (defaultItem.dimensao && !updated.dimensao) updated.dimensao = defaultItem.dimensao;
-      }
-
-      mergedList.push(updated);
-      processedCodes.add(codeKey);
-    }
-
-    // 2. Add any official catalog items that weren't in user's saved data
-    for (const initItem of INITIAL_CATALOG_ITEMS) {
-      const codeKey = initItem.codigo.trim().toUpperCase();
-      if (!processedCodes.has(codeKey)) {
-        mergedList.push(initItem);
-        processedCodes.add(codeKey);
-      }
-    }
-
-    return mergedList.length > 0 ? mergedList : INITIAL_CATALOG_ITEMS;
-  } catch (err) {
-    console.error('Failed to load and merge catalog:', err);
     return INITIAL_CATALOG_ITEMS;
-  }
-}
-
-export default function App() {
-  const [items, setItems] = useState<CatalogItem[]>(() => loadAndMergeCatalog());
+  });
 
   const [currentView, setCurrentView] = useState<ViewMode>('catalog');
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -369,180 +251,36 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Update item image manually
-  const handleUpdateItemImage = (itemId: string, imageUrl: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, imagemUrl: imageUrl } : item))
-    );
-    setSelectedItem((prev) =>
-      prev && prev.id === itemId ? { ...prev, imagemUrl: imageUrl } : prev
-    );
-    showToast(
-      imageUrl ? 'Foto técnica do item atualizada com sucesso!' : 'Imagem removida com sucesso.',
-      'success'
-    );
+  // Import items
+  const handleImportItems = (newItems: CatalogItem[]) => {
+    setItems((prev) => {
+      // Merge by code to avoid duplicate codes, or append
+      const existingCodes = new Set(prev.map((i) => i.codigo));
+      const freshItems = newItems.filter((i) => !existingCodes.has(i.codigo));
+      return [...freshItems, ...prev];
+    });
+    showToast(`${newItems.length} itens importados com sucesso!`, 'success');
   };
 
-  // Import items (bulk update via .xlsx, .csv or json)
-  const handleImportItems = (newItems: CatalogItem[], mode: 'merge' | 'replace' = 'merge') => {
-    if (mode === 'replace') {
-      setItems(newItems);
-      showToast(`Catálogo substituído com sucesso (${newItems.length} itens gravados)!`, 'success');
-    } else {
-      setItems((prev) => {
-        // Map new items by normalized code
-        const newMap = new Map(newItems.map((i) => [i.codigo.trim().toUpperCase(), i]));
-        let updatedCount = 0;
-        let addedCount = 0;
-
-        // Update existing items that match code
-        const updatedExisting = prev.map((item) => {
-          const match = newMap.get(item.codigo.trim().toUpperCase());
-          if (match) {
-            newMap.delete(item.codigo.trim().toUpperCase());
-            updatedCount++;
-
-            // Preserve existing quality description if imported item just repeats the code or is placeholder
-            let finalDescricao = match.descricao;
-            const isMatchDescRepeatedCode =
-              !match.descricao ||
-              match.descricao.trim().toUpperCase() === item.codigo.trim().toUpperCase() ||
-              match.descricao.includes('(SEM DESCRIÇÃO');
-
-            const isExistingDescValid =
-              item.descricao &&
-              item.descricao.trim().toUpperCase() !== item.codigo.trim().toUpperCase() &&
-              !item.descricao.includes('(SEM DESCRIÇÃO');
-
-            if (isMatchDescRepeatedCode && isExistingDescValid) {
-              finalDescricao = item.descricao;
-            }
-
-            return {
-              ...item,
-              descricao: finalDescricao || item.descricao,
-              categoria: match.categoria !== 'OUTROS / REPOSIÇÃO' ? match.categoria : item.categoria,
-              fabricante: match.fabricante || item.fabricante,
-              dimensao: match.dimensao || item.dimensao,
-              localizacao: match.localizacao || item.localizacao,
-              palavrasChave:
-                match.palavrasChave && match.palavrasChave.length > 0
-                  ? match.palavrasChave
-                  : item.palavrasChave,
-              observacoes: match.observacoes || item.observacoes,
-              status: match.status || item.status,
-              imagemUrl: match.imagemUrl || item.imagemUrl,
-            };
-          }
-          return item;
-        });
-
-        // Any remaining in map are brand new items
-        const freshItems = Array.from(newMap.values());
-        addedCount = freshItems.length;
-
-        showToast(
-          `Banco de dados atualizado: ${updatedCount} itens modificados e ${addedCount} novos itens adicionados!`,
-          'success'
-        );
-
-        return [...freshItems, ...updatedExisting];
-      });
-    }
-  };
-
-  // Restore factory defaults / Sync complete official catalog
+  // Restore factory defaults
   const handleRestoreDefaults = () => {
     setItems(INITIAL_CATALOG_ITEMS);
-    showToast(`Catálogo restaurado com sucesso (${INITIAL_CATALOG_ITEMS.length} itens oficiais carregados).`, 'info');
+    showToast('Catálogo padrão de fábrica restaurado com sucesso.', 'info');
   };
 
-  // Sync complete official catalog with current user data (keeps customizations, adds missing)
-  const handleRestoreOfficialCatalog = () => {
-    const initialMap = new Map(INITIAL_CATALOG_ITEMS.map((i) => [i.codigo.trim().toUpperCase(), i]));
-    const mergedList: CatalogItem[] = [];
-    const addedCodes = new Set<string>();
-
-    // 1. Keep existing items and enhance if missing details
-    for (const item of items) {
-      const codeKey = item.codigo.trim().toUpperCase();
-      const defaultItem = initialMap.get(codeKey);
-      let updated = { ...item };
-      if (defaultItem) {
-        if (!updated.documentos || updated.documentos.length === 0) {
-          updated.documentos = defaultItem.documentos;
-        }
-        if (!updated.imagemUrl && defaultItem.imagemUrl) {
-          updated.imagemUrl = defaultItem.imagemUrl;
-        }
-        if (
-          !updated.descricao ||
-          updated.descricao.trim().toUpperCase() === updated.codigo.trim().toUpperCase() ||
-          updated.descricao.includes('(SEM DESCRIÇÃO')
-        ) {
-          updated.descricao = defaultItem.descricao;
-        }
-      }
-      mergedList.push(updated);
-      addedCodes.add(codeKey);
-    }
-
-    // 2. Add any official items from INITIAL_CATALOG_ITEMS that weren't present
-    let newCount = 0;
-    for (const initItem of INITIAL_CATALOG_ITEMS) {
-      const codeKey = initItem.codigo.trim().toUpperCase();
-      if (!addedCodes.has(codeKey)) {
-        mergedList.push(initItem);
-        addedCodes.add(codeKey);
-        newCount++;
-      }
-    }
-
-    setItems(mergedList);
-    showToast(
-      `Base oficial sincronizada! ${mergedList.length} itens disponíveis no catálogo (${newCount} novos itens adicionados).`,
-      'success',
-      'Catálogo Sincronizado'
-    );
-  };
-
-  // Export items to Excel (.xlsx) spreadsheet
+  // Export items to JSON file
   const handleExportItems = () => {
     try {
-      const exportRows = items.map((item) => ({
-        CODIGO: item.codigo,
-        DESCRICAO: item.descricao,
-        CATEGORIA: item.categoria,
-        FABRICANTE: item.fabricante || '',
-        DIMENSAO: item.dimensao || '',
-        LOCALIZACAO: item.localizacao || '',
-        PALAVRAS_CHAVE: item.palavrasChave ? item.palavrasChave.join(', ') : '',
-        STATUS: item.status,
-        OBSERVACOES: item.observacoes || '',
-        IMAGEM_URL: item.imagemUrl || '',
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(exportRows);
-      worksheet['!cols'] = [
-        { wch: 22 },
-        { wch: 45 },
-        { wch: 25 },
-        { wch: 16 },
-        { wch: 18 },
-        { wch: 35 },
-        { wch: 35 },
-        { wch: 14 },
-        { wch: 35 },
-        { wch: 20 },
-      ];
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Catálogo Manutenção');
-      XLSX.writeFile(
-        workbook,
-        `catalogo_cm_manutencao_${new Date().toISOString().split('T')[0]}.xlsx`
-      );
-      showToast('Catálogo exportado para planilha Excel (.xlsx) com sucesso!', 'success');
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(items, null, 2)
+      )}`;
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', jsonString);
+      downloadAnchor.setAttribute('download', `catalogo-cm-pecas-${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Exportação concluída com sucesso!', 'success');
     } catch (e) {
       showToast('Erro ao exportar catálogo.', 'error');
     }
@@ -563,6 +301,7 @@ export default function App() {
         userRole={userRole}
         onPromptGestor={handlePromptGestor}
         onLogoutGestor={handleLogoutGestor}
+        onShareLink={handleShareLink}
       />
 
       {/* Mobile Top Navigation Bar */}
@@ -611,8 +350,8 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="md:pl-56 min-h-screen flex flex-col bg-[#f8fafc]">
-        <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 sm:p-5 lg:p-6">
+      <main className="md:pl-64 min-h-screen flex flex-col">
+        <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           {currentView === 'catalog' && (
             <CatalogSearch
               items={items}
@@ -637,7 +376,6 @@ export default function App() {
               onOpenDocuments={handleOpenDocuments}
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
-              onUpdateImage={handleUpdateItemImage}
             />
           )}
 
@@ -648,7 +386,6 @@ export default function App() {
               onOpenNewModal={handleOpenNewModal}
               onOpenImportModal={() => setIsImportModalOpen(true)}
               onExport={handleExportItems}
-              onRestoreOfficialCatalog={handleRestoreOfficialCatalog}
               onEditItem={handleOpenEditModal}
               onDeleteItem={handleDeleteItem}
               onSelectItem={handleSelectItem}

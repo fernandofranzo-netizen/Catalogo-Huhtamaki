@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Upload, Download, Search, Edit2, Trash2, Eye, Filter, CheckCircle2, AlertTriangle, Layers, FileText, Lock, ShieldCheck, Share2, KeyRound, LogOut, RotateCcw } from 'lucide-react';
+import { Plus, Upload, Download, Search, Edit2, Trash2, Eye, Filter, CheckCircle2, AlertTriangle, Layers, FileText, Lock, ShieldCheck, Share2, KeyRound, LogOut } from 'lucide-react';
 import { CatalogItem, UserRole } from '../types';
 
 interface AdminViewProps {
@@ -8,7 +8,6 @@ interface AdminViewProps {
   onOpenNewModal: () => void;
   onOpenImportModal: () => void;
   onExport: () => void;
-  onRestoreOfficialCatalog?: () => void;
   onEditItem: (item: CatalogItem) => void;
   onDeleteItem: (id: string) => void;
   onSelectItem: (item: CatalogItem) => void;
@@ -26,7 +25,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
   onOpenNewModal,
   onOpenImportModal,
   onExport,
-  onRestoreOfficialCatalog,
   onEditItem,
   onDeleteItem,
   onSelectItem,
@@ -40,7 +38,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 20;
 
   // If user is not gestor, show restricted view
   if (userRole !== 'gestor') {
@@ -145,10 +143,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
             type="button"
             onClick={onOpenImportModal}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors"
-            title="Importar catálogo em massa via planilha .xlsx ou .csv"
           >
             <Upload className="w-4 h-4 text-slate-500" />
-            <span>Importar (.xlsx / .csv)</span>
+            <span>Importar</span>
           </button>
 
           <button
@@ -156,24 +153,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
             type="button"
             onClick={onExport}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors"
-            title="Exportar base completa para Excel (.xlsx)"
           >
             <Download className="w-4 h-4 text-slate-500" />
-            <span>Exportar (.xlsx)</span>
+            <span>Exportar</span>
           </button>
-
-          {onRestoreOfficialCatalog && (
-            <button
-              id="btn-admin-restaurar-oficial"
-              type="button"
-              onClick={onRestoreOfficialCatalog}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-200 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-800 rounded-md transition-colors"
-              title="Sincronizar e carregar todos os 1.106 itens oficiais do catálogo"
-            >
-              <RotateCcw className="w-4 h-4 text-amber-500" />
-              <span>Sincronizar Base Oficial</span>
-            </button>
-          )}
         </div>
       </div>
 
