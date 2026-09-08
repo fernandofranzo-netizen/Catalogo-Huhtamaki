@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#e2e8f0" />
+      <stop offset="70%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <linearGradient id="steel-light" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+    <linearGradient id="dark-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="brass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="80%" stop-color="#ca8a04" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <linearGradient id="blue-ind" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="amber-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Background CAD Grid -->
+  <rect width="400" height="300" fill="#f8fafc" />
+  <rect width="400" height="300" fill="url(#cad-grid)" />
+  
+  <!-- Outer border -->
+  <rect x="10" y="10" width="380" height="280" rx="6" fill="none" stroke="#cbd5e1" stroke-width="1.5" />
+
+  <!-- Technical Header watermark -->
+  <text x="24" y="34" font-family="monospace" font-weight="bold" font-size="11" fill="#0284c7" letter-spacing="1.5">ESPECIFICAÇÃO TÉCNICA // CAD</text>
+  <text x="376" y="34" text-anchor="end" font-family="monospace" font-weight="bold" font-size="11" fill="#64748b">DIN 179 / DIN 172</text>
+  <line x1="24" y1="42" x2="376" y2="42" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 2" />
+
+  <!-- Component Graphic -->
+  <g transform="translate(0, 0)" filter="url(#shadow)">
+    
+      <g transform="translate(200, 138)">
+        <!-- Flange head -->
+        <rect x="-65" y="-45" width="24" height="90" rx="3" fill="url(#metal-grad)" stroke="#1e293b" stroke-width="2.5" />
+        <!-- Main body cylinder -->
+        <rect x="-41" y="-32" width="115" height="64" fill="url(#steel-light)" stroke="#1e293b" stroke-width="2" />
+        <!-- Inner bore dashed lines -->
+        <line x1="-65" y1="-18" x2="74" y2="-18" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="6 3" />
+        <line x1="-65" y1="18" x2="74" y2="18" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="6 3" />
+        <!-- Lubrication oil groove / hole -->
+        <circle cx="15" cy="0" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" />
+        <!-- Chamfer on entry -->
+        <polygon points="74,-32 82,-26 82,26 74,32" fill="url(#metal-grad)" stroke="#1e293b" stroke-width="2" />
+      </g>
+    
+  </g>
+
+  <!-- Title footer badge -->
+  <rect x="24" y="246" width="352" height="30" rx="4" fill="#0f172a" />
+  <text x="36" y="266" font-family="sans-serif" font-weight="bold" font-size="11" fill="#f8fafc" letter-spacing="0.8">BUCHA GUIA INDUSTRIAL</text>
+  <text x="364" y="266" text-anchor="end" font-family="monospace" font-weight="bold" font-size="10" fill="#38bdf8">REF. INDUSTRIAL</text>
+</svg>

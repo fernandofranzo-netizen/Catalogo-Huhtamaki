@@ -122,6 +122,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <SlidersHorizontal className="w-4 h-4 text-[#f59e0b]" />
                   <span>Administração</span>
                 </div>
+                {userRole !== 'gestor' && (
+                  <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                    <Lock className="w-3 h-3 text-amber-400/80" />
+                    <span>PIN</span>
+                  </span>
+                )}
               </button>
             </nav>
           </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Copy, Check, Edit3, Tag, MapPin, Building2, Ruler, ShieldAlert, FileText, ExternalLink, Plus, Trash2, Lock, Camera, Sparkles } from 'lucide-react';
 import { CatalogItem, TechnicalDocument, UserRole } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
+import { resolveItemImage } from '../utils/technicalImages';
 
 interface ItemDetailProps {
   item: CatalogItem;
@@ -67,8 +68,8 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
 
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          {/* Botão de Incluir / Alterar Imagem */}
-          {onOpenImageManager && (
+          {/* Botão de Incluir / Alterar Imagem - Apenas Gestor */}
+          {userRole === 'gestor' && onOpenImageManager && (
             <button
               id="btn-detail-manage-image"
               type="button"
@@ -136,48 +137,64 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
 
       {/* Two Column Layout: Visual vs Identification Specs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Visual / Image Container with click to change */}
+        {/* Left Column: Visual / Image Container with click to change (gestor only) */}
         <div className="lg:col-span-6 flex flex-col">
-          <div
-            id="container-detail-image-box"
-            onClick={() => onOpenImageManager?.(item)}
-            className="group relative bg-white border border-slate-200 hover:border-amber-400 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px] cursor-pointer transition-all"
-            title="Clique para incluir, alterar ou substituir a foto deste item"
-          >
-            {item.imagemUrl ? (
-              <div className="w-full h-80 flex items-center justify-center p-4 relative">
-                <img
-                  src={item.imagemUrl}
-                  alt={item.descricao}
-                  referrerPolicy="no-referrer"
-                  className="max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-200 group-hover:scale-105"
-                />
-              </div>
-            ) : (
-              <div className="w-full h-80 flex flex-col items-center justify-center relative">
-                <TechnicalPlaceholder size="lg" className="w-full h-full border-0 bg-transparent" />
-                <div className="mt-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-900 rounded text-xs font-mono font-bold flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Clique para incluir foto deste item</span>
+          {(() => {
+            const displayUrl = item.imagemUrl || resolveItemImage(item);
+            const isGestor = userRole === 'gestor';
+            return (
+              <div
+                id="container-detail-image-box"
+                onClick={isGestor ? () => onOpenImageManager?.(item) : undefined}
+                className={`group relative bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col items-center justify-center min-h-[380px] transition-all ${
+                  isGestor ? 'hover:border-amber-400 cursor-pointer' : ''
+                }`}
+                title={isGestor ? 'Clique para incluir, alterar ou substituir a foto deste item' : 'Visualização técnica de engenharia (modo consulta)'}
+              >
+                <div className="w-full h-80 flex items-center justify-center p-4 relative">
+                  <img
+                    src={displayUrl}
+                    alt={item.descricao}
+                    referrerPolicy="no-referrer"
+                    className={`max-h-full max-w-full object-contain mix-blend-multiply transition-transform duration-200 ${
+                      isGestor ? 'group-hover:scale-105' : ''
+                    }`}
+                    onError={(e) => {
+                      const fallback = resolveItemImage(item);
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== fallback) {
+                        target.src = fallback;
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Hover overlay hint only for gestor */}
+                {isGestor && (
+                  <div className="absolute top-3 right-3 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <span className="px-2.5 py-1 bg-slate-900/80 hover:bg-slate-900 text-white rounded text-[11px] font-mono font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-xs">
+                      <Camera className="w-3 h-3 text-amber-400" />
+                      <span>Substituir / Gerenciar Imagem</span>
+                    </span>
+                  </div>
+                )}
+
+                <div className="w-full pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>VISUAL TÉCNICO // REF. CAD</span>
+                  {isGestor ? (
+                    <span className="text-amber-700 font-semibold flex items-center gap-1">
+                      <Camera className="w-3 h-3" />
+                      <span>Alterar foto</span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-[11px]">
+                      VISTA CAD HOMOLOGADA
+                    </span>
+                  )}
                 </div>
               </div>
-            )}
-
-            {/* Hover overlay hint */}
-            <div className="absolute top-3 right-3 opacity-90 group-hover:opacity-100 transition-opacity">
-              <span className="px-2.5 py-1 bg-slate-900/80 hover:bg-slate-900 text-white rounded text-[11px] font-mono font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-xs">
-                <Camera className="w-3 h-3 text-amber-400" />
-                <span>{item.imagemUrl ? 'Substituir foto' : 'Adicionar foto'}</span>
-              </span>
-            </div>
-
-            <div className="w-full pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-mono">
-              <span>VISUAL TÉCNICO // REF. CAD</span>
-              <span className="text-amber-700/80 font-bold group-hover:text-amber-800">
-                {item.imagemUrl ? 'CLIQUE P/ SUBSTITUIR' : 'CLIQUE P/ INCLUIR IMAGEM'}
-              </span>
-            </div>
-          </div>
+            );
+          })()}
         </div>
 
         {/* Right Column: Identification Card */}

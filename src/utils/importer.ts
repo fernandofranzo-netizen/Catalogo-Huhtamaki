@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
 import { CatalogItem } from '../types';
+import { resolveItemImage } from './technicalImages';
 
 // Configure pdfjs worker for browser environments if available
 if (typeof window !== 'undefined' && 'Worker' in window) {
@@ -133,7 +134,7 @@ export function parseExcelFile(data: ArrayBuffer): CatalogItem[] {
       fabricante: fabricante ? String(fabricante).trim() : undefined,
       dimensao: dimensao ? String(dimensao).trim() : undefined,
       localizacao: localizacao ? String(localizacao).trim() : undefined,
-      imagemUrl: imagemUrl ? String(imagemUrl).trim() : undefined,
+      imagemUrl: imagemUrl ? String(imagemUrl).trim() : resolveItemImage({ codigo: String(codigo), descricao: String(descricao), categoria: String(categoria) }),
       palavrasChave,
       favorito: false,
       status: 'disponivel',
@@ -215,6 +216,7 @@ export async function parsePdfFile(data: ArrayBuffer): Promise<CatalogItem[]> {
               descricao,
               categoria: categoria.toUpperCase(),
               fabricante,
+              imagemUrl: resolveItemImage({ codigo, descricao, categoria }),
               palavrasChave: [codigo.toLowerCase(), ...descricao.toLowerCase().split(' ').slice(0, 3)],
               favorito: false,
               status: 'disponivel',
@@ -241,6 +243,7 @@ export async function parsePdfFile(data: ArrayBuffer): Promise<CatalogItem[]> {
           codigo: codigo.toUpperCase(),
           descricao: remainder,
           categoria: 'OUTROS / REPOSIÇÃO',
+          imagemUrl: resolveItemImage({ codigo, descricao: remainder, categoria: 'OUTROS / REPOSIÇÃO' }),
           palavrasChave: [codigo.toLowerCase(), ...remainder.toLowerCase().split(' ').slice(0, 3)],
           favorito: false,
           status: 'disponivel',

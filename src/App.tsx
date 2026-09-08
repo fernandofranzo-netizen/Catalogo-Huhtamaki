@@ -19,7 +19,7 @@ import { ShareModal } from './components/ShareModal';
 import { ImageManagerModal } from './components/ImageManagerModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v4';
+const STORAGE_KEY = 'cm_catalog_items_v6';
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
@@ -40,7 +40,9 @@ export default function App() {
               merged.push(initItem);
             }
           }
-          return merged;
+          if (merged.length >= INITIAL_CATALOG_ITEMS.length) {
+            return merged;
+          }
         }
       }
     } catch (e) {
@@ -254,14 +256,22 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Open Image Manager (search web suggestions, upload, or paste URL)
+  // Open Image Manager (search web suggestions, upload, or paste URL - Gestor only)
   const handleOpenImageManager = (item: CatalogItem) => {
+    if (userRole !== 'gestor') {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setImageManagerItem(item);
     setIsImageManagerOpen(true);
   };
 
-  // Save/Replace Image for an item
+  // Save/Replace Image for an item (Gestor only)
   const handleSaveItemImage = (itemId: string, newImageUrl?: string) => {
+    if (userRole !== 'gestor') {
+      showToast('Apenas o gestor pode alterar ou gerenciar imagens de componentes.', 'error');
+      return;
+    }
     setItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
@@ -278,8 +288,12 @@ export default function App() {
     showToast('Imagem do componente atualizada com sucesso!', 'success');
   };
 
-  // Import items
+  // Import items (Gestor only)
   const handleImportItems = (newItems: CatalogItem[]) => {
+    if (userRole !== 'gestor') {
+      showToast('Apenas o gestor pode importar novos itens.', 'error');
+      return;
+    }
     setItems((prev) => {
       // Merge by code to avoid duplicate codes, or append
       const existingCodes = new Set(prev.map((i) => i.codigo));
@@ -289,8 +303,12 @@ export default function App() {
     showToast(`${newItems.length} itens importados com sucesso!`, 'success');
   };
 
-  // Restore factory defaults
+  // Restore factory defaults (Gestor only)
   const handleRestoreDefaults = () => {
+    if (userRole !== 'gestor') {
+      showToast('Apenas o gestor pode restaurar o catálogo de fábrica.', 'error');
+      return;
+    }
     setItems(INITIAL_CATALOG_ITEMS);
     showToast('Catálogo padrão de fábrica restaurado com sucesso.', 'info');
   };
@@ -319,6 +337,10 @@ export default function App() {
       <Sidebar
         currentView={currentView}
         onNavigate={(view) => {
+          if (view === 'admin' && userRole !== 'gestor') {
+            setIsAuthModalOpen(true);
+            return;
+          }
           setCurrentView(view);
           if (view !== 'detail') setSelectedItem(null);
         }}
@@ -401,7 +423,7 @@ export default function App() {
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
               onLogoutGestor={handleLogoutGestor}
-              onOpenImageManager={handleOpenImageManager}
+              onOpenImageManager={userRole === 'gestor' ? handleOpenImageManager : undefined}
             />
           )}
 
@@ -415,29 +437,57 @@ export default function App() {
               onOpenDocuments={handleOpenDocuments}
               userRole={userRole}
               onPromptGestor={handlePromptGestor}
-              onOpenImageManager={handleOpenImageManager}
+              onOpenImageManager={userRole === 'gestor' ? handleOpenImageManager : undefined}
             />
           )}
 
           {currentView === 'admin' && (
-            <AdminView
-              items={items}
-              categories={CATEGORIAS_PADRAO}
-              onOpenNewModal={handleOpenNewModal}
-              onOpenImportModal={() => setIsImportModalOpen(true)}
-              onExport={handleExportItems}
-              onEditItem={handleOpenEditModal}
-              onDeleteItem={handleDeleteItem}
-              onSelectItem={handleSelectItem}
-              onOpenDocuments={handleOpenDocuments}
-              userRole={userRole}
-              onPromptGestor={handlePromptGestor}
-              onOpenChangePin={() => setIsAuthModalOpen(true)}
-              onLogoutGestor={handleLogoutGestor}
-              onShareLink={handleShareLink}
-              onBackToCatalog={() => setCurrentView('catalog')}
-              onOpenImageManager={handleOpenImageManager}
-            />
+            userRole === 'gestor' ? (
+              <AdminView
+                items={items}
+                categories={CATEGORIAS_PADRAO}
+                onOpenNewModal={handleOpenNewModal}
+                onOpenImportModal={() => setIsImportModalOpen(true)}
+                onExport={handleExportItems}
+                onEditItem={handleOpenEditModal}
+                onDeleteItem={handleDeleteItem}
+                onSelectItem={handleSelectItem}
+                onOpenDocuments={handleOpenDocuments}
+                userRole={userRole}
+                onPromptGestor={handlePromptGestor}
+                onOpenChangePin={() => setIsAuthModalOpen(true)}
+                onLogoutGestor={handleLogoutGestor}
+                onShareLink={handleShareLink}
+                onBackToCatalog={() => setCurrentView('catalog')}
+                onOpenImageManager={handleOpenImageManager}
+              />
+            ) : (
+              <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 rounded-xl p-8 text-center space-y-4 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-900">Acesso Restrito ao Gestor</h2>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  No ambiente de consulta o usuário não pode realizar alterações ou gerenciar fotos. Apenas no ambiente do gestor (com PIN) é permitido cadastrar, editar, importar ou alterar imagens.
+                </p>
+                <div className="flex justify-center gap-3 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('catalog')}
+                    className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    Voltar à Consulta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePromptGestor}
+                    className="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg transition-colors"
+                  >
+                    Entrar como Gestor (PIN)
+                  </button>
+                </div>
+              </div>
+            )
           )}
         </div>
 

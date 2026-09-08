@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#e2e8f0" />
+      <stop offset="70%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <linearGradient id="steel-light" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+    <linearGradient id="dark-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="50%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="brass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="80%" stop-color="#ca8a04" />
+      <stop offset="100%" stop-color="#854d0e" />
+    </linearGradient>
+    <linearGradient id="blue-ind" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="amber-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Background CAD Grid -->
+  <rect width="400" height="300" fill="#f8fafc" />
+  <rect width="400" height="300" fill="url(#cad-grid)" />
+  
+  <!-- Outer border -->
+  <rect x="10" y="10" width="380" height="280" rx="6" fill="none" stroke="#cbd5e1" stroke-width="1.5" />
+
+  <!-- Technical Header watermark -->
+  <text x="24" y="34" font-family="monospace" font-weight="bold" font-size="11" fill="#0284c7" letter-spacing="1.5">ESPECIFICAÇÃO TÉCNICA // CAD</text>
+  <text x="376" y="34" text-anchor="end" font-family="monospace" font-weight="bold" font-size="11" fill="#64748b">FESTO QS / SMC KQ2</text>
+  <line x1="24" y1="42" x2="376" y2="42" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 2" />
+
+  <!-- Component Graphic -->
+  <g transform="translate(0, 0)" filter="url(#shadow)">
+    
+      <g transform="translate(200, 138)">
+        <!-- Blue release ring (push-in collar) -->
+        <rect x="-90" y="-22" width="22" height="44" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="2" />
+        <!-- Internal teeth hint -->
+        <line x1="-80" y1="-16" x2="-80" y2="16" stroke="#ffffff" stroke-width="2" />
+        <!-- Nickel plated body with hex -->
+        <rect x="-68" y="-28" width="55" height="56" rx="2" fill="url(#metal-grad)" stroke="#1e293b" stroke-width="2.5" />
+        <line x1="-48" y1="-28" x2="-48" y2="28" stroke="#475569" stroke-width="2" />
+        <line x1="-28" y1="-28" x2="-28" y2="28" stroke="#475569" stroke-width="2" />
+        <!-- Male thread BSP -->
+        <rect x="-13" y="-18" width="85" height="36" fill="url(#brass)" stroke="#854d0e" stroke-width="2" />
+        
+          <line x1="-13" y1="-18" x2="-5" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="-5" y1="-18" x2="3" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="3" y1="-18" x2="11" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="11" y1="-18" x2="19" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="19" y1="-18" x2="27" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="27" y1="-18" x2="35" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="35" y1="-18" x2="43" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="43" y1="-18" x2="51" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="51" y1="-18" x2="59" y2="18" stroke="#713f12" stroke-width="2" />
+        
+          <line x1="59" y1="-18" x2="67" y2="18" stroke="#713f12" stroke-width="2" />
+        
+        <!-- Pre-applied thread sealant (Teflon blue/white) -->
+        <rect x="25" y="-19" width="30" height="38" fill="#38bdf8" opacity="0.4" />
+      </g>
+    
+  </g>
+
+  <!-- Title footer badge -->
+  <rect x="24" y="246" width="352" height="30" rx="4" fill="#0f172a" />
+  <text x="36" y="266" font-family="sans-serif" font-weight="bold" font-size="11" fill="#f8fafc" letter-spacing="0.8">CONEXÃO INSTANTÂNEA PNEUMÁTICA</text>
+  <text x="364" y="266" text-anchor="end" font-family="monospace" font-weight="bold" font-size="10" fill="#38bdf8">REF. INDUSTRIAL</text>
+</svg>

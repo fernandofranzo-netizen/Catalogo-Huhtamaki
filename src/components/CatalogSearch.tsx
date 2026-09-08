@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, X, LayoutGrid, List, SlidersHorizontal, ArrowUpDown, FileText, Lock, ShieldCheck, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
 import { CatalogItem, UserRole } from '../types';
 import { ItemCard } from './ItemCard';
+import { resolveItemImage } from '../utils/technicalImages';
 
 interface CatalogSearchProps {
   items: CatalogItem[];
@@ -285,27 +286,37 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                 className="flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer gap-4"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  {/* Thumbnail / Camera Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenImageManager?.(item);
-                    }}
-                    className="w-10 h-10 shrink-0 bg-slate-100 hover:bg-amber-100/50 border border-slate-200 hover:border-amber-300 rounded flex items-center justify-center overflow-hidden transition-colors"
-                    title="Incluir ou alterar imagem"
-                  >
-                    {item.imagemUrl ? (
+                  {/* Thumbnail */}
+                  {userRole === 'gestor' && onOpenImageManager ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenImageManager(item);
+                      }}
+                      className="w-10 h-10 shrink-0 bg-slate-100 hover:bg-amber-100/50 border border-slate-200 hover:border-amber-300 rounded flex items-center justify-center overflow-hidden transition-colors"
+                      title="Incluir ou alterar imagem"
+                    >
                       <img
-                        src={item.imagemUrl}
+                        src={item.imagemUrl || resolveItemImage(item)}
                         alt=""
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
-                    ) : (
-                      <Camera className="w-4 h-4 text-slate-400 hover:text-amber-600" />
-                    )}
-                  </button>
+                    </button>
+                  ) : (
+                    <div
+                      className="w-10 h-10 shrink-0 bg-slate-100 border border-slate-200 rounded flex items-center justify-center overflow-hidden"
+                      title="Vista técnica de referência"
+                    >
+                      <img
+                        src={item.imagemUrl || resolveItemImage(item)}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain mix-blend-multiply"
+                      />
+                    </div>
+                  )}
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -321,8 +332,8 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {/* Photo quick button */}
-                  {onOpenImageManager && (
+                  {/* Photo quick button - Gestor only */}
+                  {userRole === 'gestor' && onOpenImageManager && (
                     <button
                       type="button"
                       onClick={(e) => {

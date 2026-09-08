@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Copy, Check, ArrowRight, FileText, Camera } from 'lucide-react';
 import { CatalogItem } from '../types';
 import { TechnicalPlaceholder } from './TechnicalPlaceholder';
+import { resolveItemImage } from '../utils/technicalImages';
 
 interface ItemCardProps {
   item: CatalogItem;
@@ -51,21 +52,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
         {/* Image / Blueprint Graphic */}
         <div className="relative flex items-center justify-center w-full h-44 mb-3.5 bg-slate-50 bg-card-grid border border-slate-200/80 rounded-sm overflow-hidden p-3 group-hover:border-slate-300 transition-colors">
-          {item.imagemUrl ? (
-            <img
-              src={item.imagemUrl}
-              alt={item.descricao}
-              referrerPolicy="no-referrer"
-              className="object-contain w-full h-full transition-transform duration-200 group-hover:scale-105 mix-blend-multiply"
-              loading="lazy"
-              onError={(e) => {
-                // If external image fails to load, gracefully hide it and let container show placeholder
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <TechnicalPlaceholder size="md" className="w-full h-full border-0 bg-transparent" />
-          )}
+          {(() => {
+            const imageUrl = item.imagemUrl || resolveItemImage(item);
+            return (
+              <img
+                src={imageUrl}
+                alt={item.descricao}
+                referrerPolicy="no-referrer"
+                className="object-contain w-full h-full transition-transform duration-200 group-hover:scale-105 mix-blend-multiply"
+                loading="lazy"
+                onError={(e) => {
+                  const fallback = resolveItemImage(item);
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+            );
+          })()}
 
           {/* Camera / Edit Image Quick Button */}
           {onOpenImageManager && (
