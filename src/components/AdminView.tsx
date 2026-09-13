@@ -20,6 +20,7 @@ interface AdminViewProps {
   onBackToCatalog?: () => void;
   onOpenImageManager?: (item: CatalogItem) => void;
   onOpenSupabaseTest?: () => void;
+  onOpenDataImporter?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
@@ -37,6 +38,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   onBackToCatalog,
   onOpenImageManager,
   onOpenSupabaseTest,
+  onOpenDataImporter,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
@@ -165,6 +167,19 @@ export const AdminView: React.FC<AdminViewProps> = ({
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Exportar</span>
           </button>
+
+          {onOpenDataImporter && (
+            <button
+              id="btn-admin-importar-supabase"
+              type="button"
+              onClick={onOpenDataImporter}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider text-[#1A3282] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors shadow-xs"
+              title="Importar dados de planilhas Excel/CSV/PDF para o Supabase (Upsert)"
+            >
+              <Upload className="w-3.5 h-3.5 text-[#3F78CC]" />
+              <span>Importar Supabase (Upsert)</span>
+            </button>
+          )}
 
           {onOpenSupabaseTest && (
             <button

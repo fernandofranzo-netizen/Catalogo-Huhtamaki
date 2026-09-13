@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock, Database } from 'lucide-react';
+import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock, Database, Upload } from 'lucide-react';
 import { ViewMode, UserRole } from '../types';
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ interface SidebarProps {
   onPromptGestor?: () => void;
   onLogoutGestor?: () => void;
   onOpenSupabaseTest?: () => void;
+  onOpenDataImporter?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPromptGestor,
   onLogoutGestor,
   onOpenSupabaseTest,
+  onOpenDataImporter,
 }) => {
   return (
     <>
@@ -150,6 +152,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span>Conexão</span>
+                  </span>
+                </button>
+              )}
+
+              {onOpenDataImporter && (
+                <button
+                  id="nav-btn-data-importer"
+                  type="button"
+                  onClick={() => {
+                    onOpenDataImporter();
+                    if (isOpenMobile) onToggleMobile();
+                  }}
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-slate-300 hover:bg-slate-800/60 hover:text-white transition-colors border border-slate-800/80 bg-slate-900/40"
+                  title="Importar dados de planilhas Excel/CSV/PDF para o Supabase (Upsert)"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Upload className="w-3.5 h-3.5 text-[#3F78CC]" />
+                    <span>Importar Supabase</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-950/60 border border-blue-800/40 text-blue-300">
+                    Upsert
                   </span>
                 </button>
               )}

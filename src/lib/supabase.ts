@@ -168,3 +168,106 @@ export async function testSupabaseTableQuery(
   }
 }
 
+export interface UpsertResult {
+  success: boolean;
+  totalUpserted: number;
+  totalFailed: number;
+  batchesCount: number;
+  errors: string[];
+}
+
+/**
+ * Salva ou atualiza (upsert) registros de produtos em lote na tabela do Supabase.
+ */
+export async function upsertCatalogItemsToSupabase(
+  tableName: string,
+  items: Record<string, any>[],
+  options?: {
+    batchSize?: number;
+    onConflict?: string;
+    onProgress?: (progress: { current: number; total: number; percent: number }) => void;
+  }
+): Promise<UpsertResult> {
+  const cleanTable = tableName.trim();
+  const batchSize = options?.batchSize || 50;
+  const onConflict = options?.onConflict || 'codigo';
+  const total = items.length;
+
+  if (!cleanTable) {
+    return {
+      success: false,
+      totalUpserted: 0,
+      totalFailed: total,
+      batchesCount: 0,
+      errors: ['Nome da tabela do Supabase não foi informado.'],
+    };
+  }
+
+  if (total === 0) {
+    return {
+      success: true,
+      totalUpserted: 0,
+      totalFailed: 0,
+      batchesCount: 0,
+      errors: [],
+    };
+  }
+
+  let totalUpserted = 0;
+  let totalFailed = 0;
+  let batchesCount = 0;
+  const errors: string[] = [];
+
+  for (let i = 0; i < total; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    batchesCount++;
+
+    try {
+      // 1. Tenta fazer upsert com a coluna de conflito informada
+      let { error } = await supabase
+        .from(cleanTable)
+        .upsert(batch, { onConflict, ignoreDuplicates: false });
+
+      // Se falhar por falta de constraint única na coluna (código 42P10), tenta upsert padrão
+      if (error && (error.code === '42P10' || error.message?.toLowerCase().includes('conflict') || error.message?.toLowerCase().includes('constraint'))) {
+        const fallback = await supabase.from(cleanTable).upsert(batch);
+        error = fallback.error;
+      }
+
+      // Se ainda falhar, tenta insert direto se for tabela simples
+      if (error && (error.code === 'PGRST100' || error.message?.toLowerCase().includes('primary key'))) {
+        const insertAttempt = await supabase.from(cleanTable).insert(batch);
+        error = insertAttempt.error;
+      }
+
+      if (error) {
+        totalFailed += batch.length;
+        errors.push(`Lote ${batchesCount} (${batch.length} itens): ${error.message} (Código: ${error.code})`);
+      } else {
+        totalUpserted += batch.length;
+      }
+    } catch (err: any) {
+      totalFailed += batch.length;
+      errors.push(`Lote ${batchesCount}: ${err?.message || 'Erro inesperado na requisição'}`);
+    }
+
+    if (options?.onProgress) {
+      const current = Math.min(i + batchSize, total);
+      options.onProgress({
+        current,
+        total,
+        percent: Math.round((current / total) * 100),
+      });
+    }
+  }
+
+  return {
+    success: totalFailed === 0,
+    totalUpserted,
+    totalFailed,
+    batchesCount,
+    errors,
+  };
+}
+
+

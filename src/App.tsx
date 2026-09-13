@@ -18,6 +18,7 @@ import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ImageManagerModal } from './components/ImageManagerModal';
 import { SupabaseTestModal } from './components/SupabaseTestModal';
+import { DataImporter } from './components/DataImporter';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 const STORAGE_KEY = 'cm_catalog_items_v7';
@@ -64,6 +65,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
+  const [isDataImporterOpen, setIsDataImporterOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -305,6 +307,22 @@ export default function App() {
     showToast(`${newItems.length} itens importados com sucesso!`, 'success');
   };
 
+  // Callback when DataImporter successfully imports/upserts items to Supabase
+  const handleDataImporterSuccess = (importedItems: CatalogItem[]) => {
+    setItems((prev) => {
+      const map = new Map(prev.map((i) => [i.codigo, i]));
+      importedItems.forEach((i) => {
+        map.set(i.codigo, i);
+      });
+      return Array.from(map.values());
+    });
+    showToast(
+      `${importedItems.length} itens sincronizados com sucesso no Supabase e atualizados no catálogo!`,
+      'success',
+      'Sincronização Concluída'
+    );
+  };
+
   // Restore factory defaults (Gestor only)
   const handleRestoreDefaults = () => {
     if (userRole !== 'gestor') {
@@ -353,6 +371,7 @@ export default function App() {
         onPromptGestor={handlePromptGestor}
         onLogoutGestor={handleLogoutGestor}
         onOpenSupabaseTest={() => setIsSupabaseModalOpen(true)}
+        onOpenDataImporter={() => setIsDataImporterOpen(true)}
       />
 
       {/* Mobile Top Navigation Bar */}
@@ -473,6 +492,7 @@ export default function App() {
                 onBackToCatalog={() => setCurrentView('catalog')}
                 onOpenImageManager={handleOpenImageManager}
                 onOpenSupabaseTest={() => setIsSupabaseModalOpen(true)}
+                onOpenDataImporter={() => setIsDataImporterOpen(true)}
               />
             ) : (
               <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 rounded-xl p-8 text-center space-y-4 shadow-sm">
@@ -576,6 +596,13 @@ export default function App() {
       <SupabaseTestModal
         isOpen={isSupabaseModalOpen}
         onClose={() => setIsSupabaseModalOpen(false)}
+      />
+
+      {/* Supabase Data Importer (XLSX / CSV / PDF -> JSON -> Supabase Upsert) */}
+      <DataImporter
+        isOpen={isDataImporterOpen}
+        onClose={() => setIsDataImporterOpen(false)}
+        onImportSuccess={handleDataImporterSuccess}
       />
 
       {/* Floating Notifications */}
