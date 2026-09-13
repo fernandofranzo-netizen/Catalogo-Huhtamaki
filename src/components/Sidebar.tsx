@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock } from 'lucide-react';
+import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock, Database } from 'lucide-react';
 import { ViewMode, UserRole } from '../types';
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ interface SidebarProps {
   userRole?: UserRole;
   onPromptGestor?: () => void;
   onLogoutGestor?: () => void;
+  onOpenSupabaseTest?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -22,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole,
   onPromptGestor,
   onLogoutGestor,
+  onOpenSupabaseTest,
 }) => {
   return (
     <>
@@ -129,6 +131,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 )}
               </button>
+
+              {onOpenSupabaseTest && (
+                <button
+                  id="nav-btn-supabase-test"
+                  type="button"
+                  onClick={() => {
+                    onOpenSupabaseTest();
+                    if (isOpenMobile) onToggleMobile();
+                  }}
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-slate-300 hover:bg-slate-800/60 hover:text-white transition-colors border border-slate-800/80 bg-slate-900/40"
+                  title="Testar conexão em tempo real com o banco de dados Supabase"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Database className="w-3.5 h-3.5 text-[#3f78cc]" />
+                    <span>Teste Supabase</span>
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Conexão</span>
+                  </span>
+                </button>
+              )}
             </nav>
           </div>
 

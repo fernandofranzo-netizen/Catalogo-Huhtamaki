@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Menu, Plus, Lock, LogOut } from 'lucide-react';
+import { Menu, Plus, Lock, LogOut, Database } from 'lucide-react';
 import { CatalogItem, ViewMode, TechnicalDocument, UserRole } from './types';
 import { INITIAL_CATALOG_ITEMS, CATEGORIAS_PADRAO } from './data/initialCatalog';
 import { Sidebar } from './components/Sidebar';
@@ -17,6 +17,7 @@ import { DocumentModal } from './components/DocumentModal';
 import { AuthModal } from './components/AuthModal';
 import { ShareModal } from './components/ShareModal';
 import { ImageManagerModal } from './components/ImageManagerModal';
+import { SupabaseTestModal } from './components/SupabaseTestModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
 const STORAGE_KEY = 'cm_catalog_items_v7';
@@ -62,6 +63,7 @@ export default function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -350,6 +352,7 @@ export default function App() {
         userRole={userRole}
         onPromptGestor={handlePromptGestor}
         onLogoutGestor={handleLogoutGestor}
+        onOpenSupabaseTest={() => setIsSupabaseModalOpen(true)}
       />
 
       {/* Mobile Top Navigation Bar */}
@@ -375,6 +378,15 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsSupabaseModalOpen(true)}
+            className="p-1.5 text-[#3F78CC] hover:text-white rounded hover:bg-slate-850"
+            title="Diagnóstico de Conexão Supabase"
+          >
+            <Database className="w-4 h-4" />
+          </button>
+
           {userRole === 'gestor' ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -460,6 +472,7 @@ export default function App() {
                 onShareLink={handleShareLink}
                 onBackToCatalog={() => setCurrentView('catalog')}
                 onOpenImageManager={handleOpenImageManager}
+                onOpenSupabaseTest={() => setIsSupabaseModalOpen(true)}
               />
             ) : (
               <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 rounded-xl p-8 text-center space-y-4 shadow-sm">
@@ -558,6 +571,12 @@ export default function App() {
           onSaveImage={handleSaveItemImage}
         />
       )}
+
+      {/* Supabase Realtime & Table Diagnostic Modal */}
+      <SupabaseTestModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
+      />
 
       {/* Floating Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

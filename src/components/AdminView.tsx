@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Upload, Download, Search, Edit2, Trash2, Eye, ArrowLeft, FileText, LogOut, Camera } from 'lucide-react';
+import { Plus, Upload, Download, Search, Edit2, Trash2, Eye, ArrowLeft, FileText, LogOut, Camera, Database } from 'lucide-react';
 import { CatalogItem, UserRole } from '../types';
 
 interface AdminViewProps {
@@ -19,6 +19,7 @@ interface AdminViewProps {
   onShareLink?: () => void;
   onBackToCatalog?: () => void;
   onOpenImageManager?: (item: CatalogItem) => void;
+  onOpenSupabaseTest?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
@@ -35,6 +36,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   onLogoutGestor,
   onBackToCatalog,
   onOpenImageManager,
+  onOpenSupabaseTest,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
@@ -163,6 +165,19 @@ export const AdminView: React.FC<AdminViewProps> = ({
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Exportar</span>
           </button>
+
+          {onOpenSupabaseTest && (
+            <button
+              id="btn-admin-testar-supabase"
+              type="button"
+              onClick={onOpenSupabaseTest}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold font-mono uppercase tracking-wider text-white bg-[#1A3282] hover:bg-[#152763] rounded-md transition-colors shadow-xs border border-[#3F78CC]/40"
+              title="Testar conexão em tempo real com o banco de dados Supabase"
+            >
+              <Database className="w-3.5 h-3.5 text-[#93c5fd]" />
+              <span>Testar Supabase</span>
+            </button>
+          )}
 
           {onLogoutGestor && (
             <button
