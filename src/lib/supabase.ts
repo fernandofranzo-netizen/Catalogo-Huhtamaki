@@ -1,15 +1,118 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const getEnvUrl = (): string => (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const getEnvKey = (): string => (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '[Supabase] Variáveis de ambiente VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY não foram encontradas. Verifique seu arquivo .env na raiz do projeto.'
+let cachedClient: SupabaseClient | null = null;
+let cachedUrl = '';
+let cachedKey = '';
+
+/**
+ * Retorna se o Supabase está adequadamente configurado com credenciais válidas.
+ */
+export function isSupabaseConfigured(): boolean {
+  const url = getEnvUrl();
+  const key = getEnvKey();
+  return Boolean(
+    url &&
+    key &&
+    url.startsWith('http') &&
+    !url.includes('your-project.supabase.co') &&
+    key !== 'your-anon-key-here'
   );
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+/**
+ * Retorna o cliente Supabase com inicialização segura (lazy), sem quebrar se as variáveis de ambiente não existirem.
+ */
+export function getSupabase(): SupabaseClient | null {
+  const url = getEnvUrl();
+  const key = getEnvKey();
+
+  if (!url || !key) {
+    return null;
+  }
+
+  if (cachedClient && cachedUrl === url && cachedKey === key) {
+    return cachedClient;
+  }
+
+  try {
+    cachedClient = createClient(url, key);
+    cachedUrl = url;
+    cachedKey = key;
+    return cachedClient;
+  } catch (err) {
+    console.warn('[Supabase] Falha ao inicializar o cliente Supabase:', err);
+    return null;
+  }
+}
+
+/**
+ * Instância exportada segura do Supabase (Proxy) que não lança erro no boot se supabaseUrl estiver ausente.
+ */
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabase();
+    if (client) {
+      const val = (client as any)[prop];
+      return typeof val === 'function' ? val.bind(client) : val;
+    }
+
+    if (prop === 'auth') {
+      return {
+        getSession: async () => ({
+          data: { session: null },
+          error: {
+            message: 'Credenciais do Supabase não configuradas no .env (VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY)',
+          },
+        }),
+      };
+    }
+
+    if (prop === 'from') {
+      return (_table: string) => {
+        const dummyQuery: any = {
+          select: () => dummyQuery,
+          insert: () => dummyQuery,
+          upsert: () => dummyQuery,
+          update: () => dummyQuery,
+          delete: () => dummyQuery,
+          eq: () => dummyQuery,
+          limit: () => dummyQuery,
+          order: () => dummyQuery,
+          single: () =>
+            Promise.resolve({
+              data: null,
+              error: { message: 'VITE_SUPABASE_URL não configurada no ambiente.' },
+            }),
+          then(onfulfilled: any) {
+            return Promise.resolve({
+              data: null,
+              error: {
+                message:
+                  'Supabase não configurado. Adicione VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env.',
+                code: 'ENV_MISSING',
+              },
+              count: 0,
+              status: 400,
+              statusText: 'Bad Request',
+            }).then(onfulfilled);
+          },
+        };
+        return dummyQuery;
+      };
+    }
+
+    return () => {
+      console.warn(`[Supabase] Chamada para "${String(prop)}" ignorada: Supabase não está configurado no .env.`);
+      return Promise.resolve({
+        data: null,
+        error: { message: 'Supabase não configurado no .env' },
+      });
+    };
+  },
+});
 
 export interface SupabaseConfigInfo {
   url: string;
@@ -19,15 +122,19 @@ export interface SupabaseConfigInfo {
 }
 
 export function getSupabaseConfigInfo(): SupabaseConfigInfo {
-  const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
-  const keyLength = supabaseAnonKey ? supabaseAnonKey.length : 0;
-  const keyMasked = supabaseAnonKey
-    ? `${supabaseAnonKey.slice(0, 12)}...${supabaseAnonKey.slice(-6)}`
+  const url = getEnvUrl();
+  const key = getEnvKey();
+  const configured = isSupabaseConfigured();
+  const keyLength = key.length;
+  const keyMasked = configured
+    ? `${key.slice(0, 12)}...${key.slice(-6)}`
+    : key && key !== 'your-anon-key-here'
+    ? `${key.slice(0, 8)}...`
     : 'Não configurada';
 
   return {
-    url: supabaseUrl || 'Não configurada',
-    isConfigured,
+    url: url || 'Não configurada',
+    isConfigured: configured,
     keyLength,
     keyMasked,
   };
@@ -50,15 +157,24 @@ export interface SupabaseTestResult {
 export async function checkSupabaseConnection(): Promise<{ success: boolean; error?: string; latencyMs: number }> {
   const start = performance.now();
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!isSupabaseConfigured()) {
       return {
         success: false,
-        error: 'Credenciais do Supabase ausentes no arquivo .env (VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY)',
+        error: 'Credenciais do Supabase ausentes ou não preenchidas no arquivo .env (VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY)',
         latencyMs: 0,
       };
     }
 
-    const { error } = await supabase.auth.getSession();
+    const client = getSupabase();
+    if (!client) {
+      return {
+        success: false,
+        error: 'Não foi possível inicializar o cliente Supabase com a URL configurada.',
+        latencyMs: 0,
+      };
+    }
+
+    const { error } = await client.auth.getSession();
     const duration = Math.round(performance.now() - start);
 
     if (error) {
@@ -86,7 +202,7 @@ export async function testSupabaseTableQuery(
   const cleanTable = tableName.trim();
   const start = performance.now();
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!isSupabaseConfigured()) {
     return {
       success: false,
       latencyMs: 0,
@@ -95,7 +211,21 @@ export async function testSupabaseTableQuery(
       tableName: cleanTable,
       error: 'VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY não configuradas no .env',
       errorCode: 'MISSING_ENV',
-      errorHint: 'Adicione suas credenciais no arquivo .env na raiz do projeto e reinicie o Vite.',
+      errorHint: 'Adicione suas credenciais do projeto Supabase nas variáveis de ambiente (.env) para consultar dados reais.',
+    };
+  }
+
+  const client = getSupabase();
+  if (!client) {
+    return {
+      success: false,
+      latencyMs: 0,
+      data: null,
+      count: 0,
+      tableName: cleanTable,
+      error: 'Cliente Supabase não pôde ser inicializado',
+      errorCode: 'INIT_ERROR',
+      errorHint: 'Verifique se a URL informada no VITE_SUPABASE_URL possui formato válido (ex: https://xyz.supabase.co).',
     };
   }
 
@@ -113,7 +243,7 @@ export async function testSupabaseTableQuery(
   }
 
   try {
-    const { data, error, status, statusText } = await supabase
+    const { data, error, status, statusText } = await client
       .from(cleanTable)
       .select('*')
       .limit(limit);
@@ -193,6 +323,27 @@ export async function upsertCatalogItemsToSupabase(
   const onConflict = options?.onConflict || 'codigo';
   const total = items.length;
 
+  if (!isSupabaseConfigured()) {
+    return {
+      success: false,
+      totalUpserted: 0,
+      totalFailed: total,
+      batchesCount: 0,
+      errors: ['Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env.'],
+    };
+  }
+
+  const client = getSupabase();
+  if (!client) {
+    return {
+      success: false,
+      totalUpserted: 0,
+      totalFailed: total,
+      batchesCount: 0,
+      errors: ['Falha ao inicializar o cliente Supabase.'],
+    };
+  }
+
   if (!cleanTable) {
     return {
       success: false,
@@ -224,19 +375,24 @@ export async function upsertCatalogItemsToSupabase(
 
     try {
       // 1. Tenta fazer upsert com a coluna de conflito informada
-      let { error } = await supabase
+      let { error } = await client
         .from(cleanTable)
         .upsert(batch, { onConflict, ignoreDuplicates: false });
 
       // Se falhar por falta de constraint única na coluna (código 42P10), tenta upsert padrão
-      if (error && (error.code === '42P10' || error.message?.toLowerCase().includes('conflict') || error.message?.toLowerCase().includes('constraint'))) {
-        const fallback = await supabase.from(cleanTable).upsert(batch);
+      if (
+        error &&
+        (error.code === '42P10' ||
+          error.message?.toLowerCase().includes('conflict') ||
+          error.message?.toLowerCase().includes('constraint'))
+      ) {
+        const fallback = await client.from(cleanTable).upsert(batch);
         error = fallback.error;
       }
 
       // Se ainda falhar, tenta insert direto se for tabela simples
       if (error && (error.code === 'PGRST100' || error.message?.toLowerCase().includes('primary key'))) {
-        const insertAttempt = await supabase.from(cleanTable).insert(batch);
+        const insertAttempt = await client.from(cleanTable).insert(batch);
         error = insertAttempt.error;
       }
 
@@ -269,5 +425,3 @@ export async function upsertCatalogItemsToSupabase(
     errors,
   };
 }
-
-

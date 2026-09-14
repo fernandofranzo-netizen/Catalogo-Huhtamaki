@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import {
   supabase,
+  getSupabase,
+  isSupabaseConfigured,
   getSupabaseConfigInfo,
   checkSupabaseConnection,
   testSupabaseTableQuery,
@@ -116,8 +118,15 @@ export const SupabaseTestModal: React.FC<SupabaseTestModalProps> = ({
       palavrasChave: ['teste', 'supabase', 'diagnostico']
     };
 
+    const client = getSupabase();
+    if (!client || !isSupabaseConfigured()) {
+      setInsertFeedback('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env.');
+      setInsertingSample(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from(tableName.trim())
         .insert([testItemPayload])
         .select();
