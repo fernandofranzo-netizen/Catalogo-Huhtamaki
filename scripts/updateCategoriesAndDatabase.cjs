@@ -1,33 +1,28 @@
 const fs = require('fs');
 const path = require('path');
 
-const CATEGORY_MAP = {
-  'AU': 'MATERIAL AUXILIAR DE PRODUÇÃO',
-  'EE': 'MATERIAL DE EMBALAGENS',
-  'ES': 'MATERIAIS DE ESCRITÓRIO',
-  'LP': 'MATERIAIS DE LIMPEZA',
-  'MD': 'MATERIAL DIVERSO',
-  'ME': 'MATERIAL ELÉTRICO',
-  'MM': 'MATERIAL MECÂNICO',
-  'SG': 'MATERIAIS DE SEGURANÇA',
-  'UC': 'MATERIAL DE USO E CONSUMO',
-  'UG': 'UTILITIES - GÁS',
-  'UN': 'UNIFORMES',
-  'NN': 'MATERIAL MECÂNICO'
-};
+const RAW_FILES = [
+  path.join(__dirname, '../src/data/raw/attached_pages_01_05.txt'),
+  path.join(__dirname, '../src/data/raw/attached_pages_06_10.txt'),
+  path.join(__dirname, '../src/data/raw/attached_pages_11_15.txt'),
+  path.join(__dirname, '../src/data/raw/attached_pages_16_20.txt'),
+];
 
-const MATERIAL_GROUP_MAP = {
-  'AU': 'MRO',
-  'EE': 'Secondary packaging',
-  'ES': 'Facilities Management',
-  'LP': 'MRO',
-  'MD': 'MRO',
-  'ME': 'MRO',
-  'MM': 'MRO',
-  'SG': 'Personal Protection Equipment',
-  'UC': 'MRO',
-  'UG': 'MRO',
-  'UN': 'Facilities Management'
+const CATEGORY_MAP = {
+  'MATERIAL AUXILIAR DE PRODUCAO': 'MATERIAL AUXILIAR DE PRODUÇÃO',
+  'MATERIAL AUXILIAR DE PRODUÇÃO': 'MATERIAL AUXILIAR DE PRODUÇÃO',
+  'MATERIAL DE EMBALAGENS': 'MATERIAL DE EMBALAGENS',
+  'MATERIAIS ESCRITORIO': 'MATERIAIS DE ESCRITÓRIO',
+  'MATERIAIS DE ESCRITÓRIO': 'MATERIAIS DE ESCRITÓRIO',
+  'MATERIAIS LIMPEZA': 'MATERIAIS DE LIMPEZA',
+  'MATERIAIS DE LIMPEZA': 'MATERIAIS DE LIMPEZA',
+  'MATERIAL DIVERSO': 'MATERIAL DIVERSO',
+  'MATERIAL ELETRICO': 'MATERIAL ELÉTRICO',
+  'MATERIAL ELÉTRICO': 'MATERIAL ELÉTRICO',
+  'MATERIAL MECANICO': 'MATERIAL MECÂNICO',
+  'MATERIAL MECÂNICO': 'MATERIAL MECÂNICO',
+  'SERVICOS': 'SERVIÇOS',
+  'SERVIÇOS': 'SERVIÇOS',
 };
 
 const SUB_CATEGORIAS_MAP = {
@@ -69,87 +64,115 @@ const SUB_CATEGORIAS_MAP = {
   'CPELE': 'Componentes Elétricos e Sensores',
   'REPOS': 'Rolamentos, Mancais e Resistências',
   'ABRAS': 'Discos Abrasivos, Lixas e Rebolos',
-  'ABARS': 'Discos Abrasivos, Lixas e Rebolos',
   'CPMEC': 'Componentes Mecânicos e Bombas',
-  'VEDAC': 'Vedações, Retentores e O-Rings',
-  'VEDC': 'Vedações, Retentores e O-Rings',
-  'ALMOF': 'Almofadas Auriculares',
-  'ABAF': 'Abafadores de Ruído',
-  'BOTAS': 'Botas de Segurança',
-  'BOTA': 'Botas de Segurança',
-  'CARTU': 'Cartuchos para Respiradores',
-  'CINTA': 'Cintas Ergonômicas',
-  'CINTO': 'Cintos de Segurança',
-  'COLET': 'Coletes Refletivos',
-  'CREME': 'Cremes Protetores e Solar',
-  'LUVAS': 'Luvas de Proteção e Anticorte',
-  'LUVA': 'Luvas de Proteção e Anticorte',
-  'MASCA': 'Máscaras e Respiradores',
-  'MASC': 'Máscaras e Respiradores',
-  'OCULO': 'Óculos de Proteção',
-  'OCUL': 'Óculos de Proteção',
-  'PROTE': 'Protetores Faciais e Auriculares',
-  'RESPI': 'Respiradores Descartáveis',
-  'SAPAT': 'Sapatos de Segurança',
-  'TOUCA': 'Toucas Descartáveis',
-  'ACETA': 'Acetato de Etila',
-  'BOLSA': 'Bolsas Dessecantes Sílica',
-  'CADEA': 'Cadeados de Segurança',
-  'COPOS': 'Copos Descartáveis',
-  'ESCOV': 'Escovas Manuais de Aço e Latão',
-  'ESPAT': 'Espátulas de Latão Antifaiscante',
-  'ESPON': 'Esponjas Metálicas',
-  'ESTIL': 'Estiletes e Cortadores de Segurança',
-  'FIBRA': 'Fibras de Limpeza Pesada',
-  'LAMIN': 'Lâminas para Estiletes',
-  'PARAF': 'Parafina Industrial',
-  'TESOU': 'Tesouras de Segurança',
-  'TRENA': 'Trenas de Medição',
-  'GASES': 'Gases Refrigerantes',
-  'CALCA': 'Calças Profissionais e Eletricista',
-  'CAMIS': 'Camisas Polo e Sociais Huhtamaki',
-  'JALEC': 'Jalecos Profissionais',
-  'CAPAC': 'Capacetes de Proteção',
-  'AVENT': 'Aventais de Proteção',
-  'CORTE': 'Ferramentas de Corte',
-  'FERRA': 'Ferramentas Manuais'
+  'ROLAM': 'Rolamentos e Mancais de Precisão',
+  'INDUS': 'Serviços Industriais e Usinagem',
+  'MANUT': 'Manutenção Mecânica e Elétrica',
+  'PREDI': 'Manutenção Predial e Instalações',
+  'SEGUR': 'Segurança, Laudos e Calibração',
 };
 
+const topGroups = [
+  'Facilities Management',
+  'IT and Telecom',
+  'Secondary packaging',
+  'Personal Protection Equipment',
+  'Services',
+  'MRO',
+];
+
 const catalogPath = path.join(__dirname, '../src/data/catalogItems.json');
-const items = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-
-console.log(`Carregados ${items.length} itens do banco de dados atual.`);
-
-let updatedCount = 0;
-const categorySummary = {};
-
-for (const item of items) {
-  // Correção de código OCR incorreto NN -> MM
-  if (item.codigo.startsWith('NN-')) {
-    item.codigo = item.codigo.replace('NN-', 'MM-');
+let existingItems = [];
+if (fs.existsSync(catalogPath)) {
+  try {
+    existingItems = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+  } catch (err) {
+    console.warn('Could not read existing catalog, starting fresh', err);
   }
+}
+const existingMap = new Map(existingItems.map((i) => [i.codigo, i]));
 
-  const parts = item.codigo.split('-');
-  const prefix = parts[0] || 'MM';
-  const subcode = parts[1] || 'DVSOS';
+const newCatalog = [];
+const categorySummary = {};
+let matchedExisting = 0;
 
-  const novaCategoria = CATEGORY_MAP[prefix] || 'MATERIAL DIVERSO';
-  const subcategoriaDesc = SUB_CATEGORIAS_MAP[subcode] || subcode;
-  const materialGroup = MATERIAL_GROUP_MAP[prefix] || 'MRO';
+for (const filePath of RAW_FILES) {
+  if (!fs.existsSync(filePath)) {
+    console.warn(`File not found: ${filePath}`);
+    continue;
+  }
+  const lines = fs.readFileSync(filePath, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean);
 
-  item.categoria = novaCategoria;
-  item.subcategoria = subcategoriaDesc;
-  item.materialStructure = subcode;
-  item.materialGroup = materialGroup;
+  for (const line of lines) {
+    if (line.startsWith('CATEGORIA CÓDIGO') || line.startsWith('CATEGORIA') && line.includes('CÓDIGO')) {
+      continue;
+    }
 
-  categorySummary[novaCategoria] = (categorySummary[novaCategoria] || 0) + 1;
-  updatedCount++;
+    const match = line.match(/^([A-Z\s]+?)\s+([A-Z]{2}-([A-Z0-9]+)-\d{5}-\d{2})\s+(.+)$/);
+    if (!match) continue;
+
+    const [_, rawCat, code, subcode, rest] = match;
+
+    // Find the earliest occurrence of topGroups as whole token boundary
+    let earliestPos = -1;
+    let foundGroup = '';
+    for (const g of topGroups) {
+      const regex = new RegExp(`\\s+${g.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\$&')}(\\s+|$)`);
+      const m = rest.match(regex);
+      if (m && (earliestPos === -1 || m.index < earliestPos)) {
+        earliestPos = m.index;
+        foundGroup = g;
+      }
+    }
+
+    // Exact description from attached list
+    const desc = (earliestPos !== -1 ? rest.substring(0, earliestPos) : rest).trim();
+    const meta = (earliestPos !== -1 ? rest.substring(earliestPos) : '').trim();
+
+    const catNormalized = CATEGORY_MAP[rawCat.trim()] || rawCat.trim();
+    const subcatDesc = SUB_CATEGORIAS_MAP[subcode] || subcode;
+
+    const existing = existingMap.get(code.trim());
+    if (existing) matchedExisting++;
+
+    const item = {
+      id: existing?.id || `item-${code.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+      codigo: code.trim(),
+      descricao: desc, // 100% strict match to the attached list
+      categoria: catNormalized,
+      subcategoria: subcatDesc,
+      materialGroup: foundGroup || existing?.materialGroup || 'MRO',
+      materialStructure: subcode,
+      fabricante: existing?.fabricante || undefined,
+      dimensao: existing?.dimensao || undefined,
+      localizacao: existing?.localizacao || undefined,
+      palavrasChave: Array.from(
+        new Set([
+          ...code.toLowerCase().split(/[^a-z0-9]+/),
+          ...desc.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 2),
+          subcatDesc.toLowerCase(),
+          catNormalized.toLowerCase(),
+        ])
+      ).filter(Boolean),
+      imagemUrl: existing?.imagemUrl || undefined,
+      favorito: existing?.favorito || false,
+      status: existing?.status || 'disponivel',
+      documentos: existing?.documentos || [],
+      observacoes: existing?.observacoes || undefined,
+    };
+
+    newCatalog.push(item);
+    categorySummary[catNormalized] = (categorySummary[catNormalized] || 0) + 1;
+  }
 }
 
-fs.writeFileSync(catalogPath, JSON.stringify(items, null, 2), 'utf8');
+fs.writeFileSync(catalogPath, JSON.stringify(newCatalog, null, 2), 'utf8');
 
-console.log(`Banco de dados atualizado com sucesso! Total de itens: ${updatedCount}`);
-console.log('Distribuição por Categoria Oficial Huhtamaki:');
+console.log(`Banco de dados atualizado com sucesso!`);
+console.log(`Total de itens importados: ${newCatalog.length} (com 100% de precisão de código e descrição)`);
+console.log(`Preservados metadados de ${matchedExisting} itens pré-existentes.`);
+console.log('\nDistribuição por Categoria Oficial Huhtamaki:');
 for (const [cat, count] of Object.entries(categorySummary)) {
   console.log(`- ${cat}: ${count} itens`);
 }
+

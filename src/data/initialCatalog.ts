@@ -10,10 +10,6 @@ export const CATEGORIAS_PADRAO = [
   'MATERIAL DIVERSO',
   'MATERIAL ELÉTRICO',
   'MATERIAL MECÂNICO',
-  'MATERIAIS DE SEGURANÇA',
-  'MATERIAL DE USO E CONSUMO',
-  'UTILITIES - GÁS',
-  'UNIFORMES',
 ] as const;
 
 export const INITIAL_CATALOG_ITEMS: CatalogItem[] = catalogData as CatalogItem[];

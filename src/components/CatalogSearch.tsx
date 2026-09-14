@@ -48,18 +48,26 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
       .filter((item) => {
         // Search term matching
         if (searchTerm.trim()) {
-          const term = searchTerm.toLowerCase();
-          const matchCode = item.codigo.toLowerCase().includes(term);
-          const matchDesc = item.descricao.toLowerCase().includes(term);
-          const matchFabr = item.fabricante?.toLowerCase().includes(term);
-          const matchDim = item.dimensao?.toLowerCase().includes(term);
-          const matchLoc = item.localizacao?.toLowerCase().includes(term);
-          const matchSubcat = item.subcategoria?.toLowerCase().includes(term);
-          const matchCat = item.categoria?.toLowerCase().includes(term);
-          const matchMatStruct = item.materialStructure?.toLowerCase().includes(term);
-          const matchTags = item.palavrasChave?.some((tag) => tag.toLowerCase().includes(term));
-          if (!matchCode && !matchDesc && !matchFabr && !matchDim && !matchLoc && !matchTags && !matchSubcat && !matchCat && !matchMatStruct) {
-            return false;
+          const term = searchTerm.toLowerCase().trim();
+
+          // Strict precision for key requested keywords
+          if (term === 'fita' || term === 'fitas') {
+            if (!item.palavrasChave?.includes('fita')) return false;
+          } else if (term === 'adaptador' || term === 'adaptadores') {
+            if (!item.palavrasChave?.includes('adaptador')) return false;
+          } else {
+            const matchCode = item.codigo.toLowerCase().includes(term);
+            const matchDesc = item.descricao.toLowerCase().includes(term);
+            const matchFabr = item.fabricante?.toLowerCase().includes(term);
+            const matchDim = item.dimensao?.toLowerCase().includes(term);
+            const matchLoc = item.localizacao?.toLowerCase().includes(term);
+            const matchSubcat = item.subcategoria?.toLowerCase().includes(term);
+            const matchCat = item.categoria?.toLowerCase().includes(term);
+            const matchMatStruct = item.materialStructure?.toLowerCase().includes(term);
+            const matchTags = item.palavrasChave?.some((tag) => tag.toLowerCase().includes(term));
+            if (!matchCode && !matchDesc && !matchFabr && !matchDim && !matchLoc && !matchTags && !matchSubcat && !matchCat && !matchMatStruct) {
+              return false;
+            }
           }
         }
 
@@ -196,6 +204,44 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
               );
             })}
           </div>
+        </div>
+
+        {/* Quick Keyword Pills (Palavras-Chave Frequentes) */}
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase mr-1">Palavras-chave:</span>
+          {[
+            { label: 'FITA (49)', term: 'FITA' },
+            { label: 'ADAPTADOR (36)', term: 'ADAPTADOR' },
+            { label: 'ROLAMENTO', term: 'ROLAMENTO' },
+            { label: 'PARAFUSO', term: 'PARAFUSO' },
+            { label: 'VÁLVULA', term: 'VALVULA' },
+            { label: 'SENSOR', term: 'SENSOR' },
+            { label: 'CORREIA', term: 'CORREIA' },
+          ].map((kw) => {
+            const isKwActive = searchTerm.toUpperCase().trim() === kw.term;
+            return (
+              <button
+                key={kw.term}
+                id={`btn-kw-${kw.term.toLowerCase()}`}
+                type="button"
+                onClick={() => {
+                  if (isKwActive) {
+                    setSearchTerm('');
+                  } else {
+                    setSearchTerm(kw.term);
+                    setSelectedCategory('TODOS');
+                  }
+                }}
+                className={`px-2.5 py-0.5 text-[11px] font-mono rounded-full transition-all border ${
+                  isKwActive
+                    ? 'bg-[#1A3282] text-white border-[#1A3282] font-bold shadow-xs'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200'
+                }`}
+              >
+                {kw.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

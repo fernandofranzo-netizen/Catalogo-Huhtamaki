@@ -459,10 +459,13 @@ export function resolveItemImage(item: { codigo?: string; descricao?: string; ca
   // Fallback por categoria oficial Huhtamaki
   if (cat.includes('ELÉTRICO') || cat.includes('ELETRICO')) return '/assets/components/clp-modulo.svg';
   if (cat.includes('MECÂNICO') || cat.includes('MECANICO')) return '/assets/components/peca-mecanica-geral.svg';
+  if (cat.includes('SERVIÇOS') || cat.includes('SERVICOS')) return '/assets/components/peca-mecanica-geral.svg';
+  if (cat.includes('AUXILIAR')) return '/assets/components/anel-elastico.svg';
   if (cat.includes('SEGURANÇA') || cat.includes('SEGURANCA')) return '/assets/photos/botina-bracol.jpg';
   if (cat.includes('EMBALAGENS')) return '/assets/components/filtro-industrial.svg';
   if (cat.includes('ESCRITÓRIO') || cat.includes('ESCRITORIO')) return '/assets/components/adesivo-loctite.svg';
   if (cat.includes('LIMPEZA')) return '/assets/components/filtro-industrial.svg';
+  if (cat.includes('DIVERSO')) return '/assets/components/peca-mecanica-geral.svg';
   if (cat.includes('UNIFORMES')) return '/assets/photos/botina-bracol.jpg';
   if (cat.includes('GÁS') || cat.includes('GAS') || cat.includes('UTILITIES')) return '/assets/components/gas-refrigerante.svg';
   if (cat.includes('FIXAÇÃO')) return '/assets/components/parafuso-sextavado.svg';
