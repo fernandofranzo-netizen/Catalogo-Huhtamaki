@@ -48,7 +48,7 @@
 
   <!-- Technical Header watermark -->
   <text x="24" y="34" font-family="monospace" font-weight="bold" font-size="11" fill="#0284c7" letter-spacing="1.5">ESPECIFICAÇÃO TÉCNICA // CAD</text>
-  <text x="376" y="34" text-anchor="end" font-family="monospace" font-weight="bold" font-size="11" fill="#64748b">CATÁLOGO HUHTAMAKI</text>
+  <text x="376" y="34" text-anchor="end" font-family="monospace" font-weight="bold" font-size="11" fill="#64748b">CATÁLOGO MANUTAMAKI</text>
   <line x1="24" y1="42" x2="376" y2="42" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 2" />
 
   <!-- Component Graphic -->

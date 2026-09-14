@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Copy, Check, ArrowRight, FileText, Camera, Heart } from 'lucide-react';
+import { Copy, Check, Heart, ArrowRight, Camera } from 'lucide-react';
 import { CatalogItem } from '../types';
-import { resolveItemImage } from '../utils/technicalImages';
+import { getTechnicalPlaceholder } from '../utils/technicalReference';
 
 interface ItemCardProps {
   item: CatalogItem;
@@ -17,11 +17,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   onSelect,
   onToggleFavorite,
   onCopySuccess,
-  onOpenDocuments,
   onOpenImageManager,
 }) => {
   const [copied, setCopied] = useState(false);
-  const docCount = item.documentos ? item.documentos.length : 0;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,12 +29,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const handleManageImage = (e: React.MouseEvent) => {
+  const handleImageManager = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onOpenImageManager?.(item);
+    if (onOpenImageManager) onOpenImageManager(item);
   };
 
-  const imageUrl = resolveItemImage(item);
+  const fallbackImg = getTechnicalPlaceholder(item);
+  const displayImg = item.imagemUrl || fallbackImg;
 
   return (
     <div
@@ -45,24 +44,24 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       className="group relative flex flex-col justify-between bg-white border border-slate-200 rounded-lg p-3.5 sm:p-4 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-150 cursor-pointer"
     >
       <div>
-        {/* Top: Image / Blueprint Graphic Box */}
-        <div className="relative flex items-center justify-center w-full h-48 sm:h-52 mb-3 bg-[#f8fafc] bg-card-grid border border-slate-200/90 rounded-sm overflow-hidden p-3 group-hover:border-slate-300 transition-colors">
+        {/* Technical Graphic / Image Container */}
+        <div className="relative flex items-center justify-center w-full h-48 sm:h-52 mb-3 bg-[#f8fafc] border border-slate-200/90 rounded-sm overflow-hidden p-3 group-hover:border-slate-300 transition-colors">
           <img
-            src={item.imagemUrl || imageUrl}
+            src={displayImg}
             alt={item.descricao}
             referrerPolicy="no-referrer"
             className="max-h-full max-w-full object-contain transition-transform duration-200 group-hover:scale-105"
             loading="lazy"
             onError={(e) => {
-              const fallback = resolveItemImage(item);
               const target = e.target as HTMLImageElement;
+              const fallback = getTechnicalPlaceholder(item);
               if (target.src !== fallback) {
                 target.src = fallback;
               }
             }}
           />
 
-          {/* Top-right quick actions (Copy and Favorite) matching reference image */}
+          {/* Action badges top right */}
           <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
             <button
               type="button"
@@ -72,6 +71,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
+
             {onToggleFavorite && (
               <button
                 type="button"
@@ -82,13 +82,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({
                 className="p-1 text-slate-300 hover:text-rose-500 hover:bg-white/80 rounded transition-colors"
                 title={item.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
               >
-                <Heart className={`w-3.5 h-3.5 ${item.favorito ? 'fill-rose-500 text-rose-500' : ''}`} />
+                <Heart
+                  className={`w-3.5 h-3.5 ${
+                    item.favorito ? 'fill-rose-500 text-rose-500' : ''
+                  }`}
+                />
               </button>
             )}
+
             {onOpenImageManager && (
               <button
                 type="button"
-                onClick={handleManageImage}
+                onClick={handleImageManager}
                 className="p-1 text-slate-300 hover:text-amber-600 hover:bg-white/80 rounded transition-colors opacity-0 group-hover:opacity-100"
                 title="Alterar imagem deste componente"
               >
@@ -97,13 +102,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             )}
           </div>
 
-          {/* Bottom-left watermark matching reference image */}
+          {/* Reference watermark label */}
           <div className="absolute bottom-2 left-2 text-[9px] font-mono tracking-widest text-slate-400 select-none uppercase pointer-events-none">
             VISTA DE REFERÊNCIA
           </div>
         </div>
 
-        {/* Category Badge placed below the image box */}
+        {/* Categories Badges */}
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           <span className="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded-xs uppercase font-mono">
             {item.categoria}
@@ -115,21 +120,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </div>
 
-        {/* Item Code (Prominent Monospace) */}
+        {/* Code */}
         <div className="font-mono text-sm sm:text-base font-bold tracking-wide text-slate-900 group-hover:text-[#1A3282] transition-colors">
           {item.codigo}
         </div>
 
-        {/* Item Description */}
-        <p className="mt-1 text-xs text-slate-600 line-clamp-2 min-h-[34px] leading-relaxed">
+        {/* Description */}
+        <p className="mt-1 text-xs text-slate-600 line-clamp-2 min-h-[34px] leading-relaxed uppercase font-medium">
           {item.descricao}
         </p>
 
-        {/* Optional Dimensions / Fabricante */}
-        {item.fabricante && (
+        {/* Manufacturer and Dimensions */}
+        {(item.fabricante || item.dimensao) && (
           <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1 font-mono">
-            <span>FABR:</span>
-            <span className="font-semibold text-slate-600">{item.fabricante}</span>
+            {item.fabricante && (
+              <>
+                <span>FABR:</span>
+                <span className="font-semibold text-slate-600">{item.fabricante}</span>
+              </>
+            )}
             {item.dimensao && (
               <>
                 <span className="text-slate-300">•</span>
@@ -140,7 +149,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         )}
       </div>
 
-      {/* Footer Actions matching reference image */}
+      {/* Bottom Action Row */}
       <div className="flex items-center gap-2 pt-3 mt-3 border-t border-slate-100">
         <button
           id={`btn-copy-${item.id}`}
@@ -165,23 +174,6 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           )}
         </button>
 
-        {/* Technical Documents (if available) */}
-        {docCount > 0 && onOpenDocuments && (
-          <button
-            id={`btn-doc-${item.id}`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDocuments(item);
-            }}
-            className="flex items-center justify-center gap-1 p-2 text-xs font-bold rounded-xs border transition-colors bg-cyan-50 border-cyan-300 text-cyan-800 hover:bg-cyan-100"
-            title={`${docCount} documento(s) técnico(s) / data-sheet anexado(s)`}
-          >
-            <FileText className="w-4 h-4" />
-            <span className="text-[10px] font-mono font-black">{docCount}</span>
-          </button>
-        )}
-
         <button
           id={`btn-view-${item.id}`}
           type="button"
@@ -189,8 +181,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             e.stopPropagation();
             onSelect(item);
           }}
-          className="flex items-center justify-center p-2 text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xs transition-colors"
-          title="Ver detalhes técnicos do item"
+          className="flex items-center justify-center p-2 text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-800 border border-slate-200 rounded-xs transition-colors"
+          title="Ver detalhes do item"
           aria-label="Ver detalhes"
         >
           <ArrowRight className="w-4 h-4" />

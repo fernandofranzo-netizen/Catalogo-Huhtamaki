@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="coat-white" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#f1f5f9" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+    <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Background CAD Grid -->
+  <rect width="400" height="300" fill="#f8fafc" />
+  <rect width="400" height="300" fill="url(#cad-grid)" />
+
+  <g transform="translate(100, 20)" filter="url(#soft-shadow)">
+    <!-- Sleeves -->
+    <!-- Left Sleeve -->
+    <path d="M 50 35 L 5 130 L 32 138 L 62 80 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.8" />
+    <path d="M 5 130 L 32 138" stroke="#0284c7" stroke-width="2.5" /> <!-- Elastic cuff -->
+
+    <!-- Right Sleeve -->
+    <path d="M 150 35 L 195 130 L 168 138 L 138 80 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.8" />
+    <path d="M 195 130 L 168 138" stroke="#0284c7" stroke-width="2.5" /> <!-- Elastic cuff -->
+
+    <!-- Torso / Long Lab Coat -->
+    <path d="M 50 35 Q 100 45 150 35 L 158 240 L 42 240 Z" fill="url(#coat-white)" stroke="#94a3b8" stroke-width="2" />
+
+    <!-- Center Closure -->
+    <line x1="100" y1="50" x2="100" y2="240" stroke="#cbd5e1" stroke-width="1.5" />
+    <!-- Buttons / Snaps -->
+    <circle cx="100" cy="70" r="2.5" fill="#3b82f6" />
+    <circle cx="100" cy="100" r="2.5" fill="#3b82f6" />
+    <circle cx="100" cy="130" r="2.5" fill="#3b82f6" />
+    <circle cx="100" cy="160" r="2.5" fill="#3b82f6" />
+    <circle cx="100" cy="190" r="2.5" fill="#3b82f6" />
+
+    <!-- Lapels / V-Neck -->
+    <path d="M 100 50 L 75 18 L 84 52 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" />
+    <path d="M 100 50 L 125 18 L 116 52 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" />
+
+    <!-- Upper Chest Pocket -->
+    <rect x="60" y="70" width="26" height="30" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,1" />
+
+    <!-- Lower Pockets -->
+    <rect x="52" y="160" width="34" height="42" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,1" />
+    <rect x="114" y="160" width="34" height="42" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,1" />
+  </g>
+
+  <!-- Technical specs legend -->
+  <g transform="translate(20, 275)" font-family="monospace" font-size="9" fill="#64748b">
+    <text x="0" y="0">JALECO PROFISSIONAL / AVENTAL MANGA LONGA / INDUSTRIAL</text>
+  </g>
+</svg>

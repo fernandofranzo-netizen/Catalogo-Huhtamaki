@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="fabric-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="fabric-denim" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="50%" stop-color="#172554" />
+      <stop offset="100%" stop-color="#1e3a8a" />
+    </linearGradient>
+    <linearGradient id="refl-tape" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0" />
+      <stop offset="50%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+    <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- Background CAD Grid -->
+  <rect width="400" height="300" fill="#f8fafc" />
+  <rect width="400" height="300" fill="url(#cad-grid)" />
+
+  <g transform="translate(110, 20)" filter="url(#soft-shadow)">
+    <!-- Trousers silhouette -->
+    <!-- Waistband -->
+    <rect x="25" y="10" width="130" height="18" rx="4" fill="#1e3a8a" stroke="#0f172a" stroke-width="1.5" />
+    <!-- Belt loops -->
+    <line x1="45" y1="10" x2="45" y2="28" stroke="#3b82f6" stroke-width="2" />
+    <line x1="75" y1="10" x2="75" y2="28" stroke="#3b82f6" stroke-width="2" />
+    <line x1="105" y1="10" x2="105" y2="28" stroke="#3b82f6" stroke-width="2" />
+    <line x1="135" y1="10" x2="135" y2="28" stroke="#3b82f6" stroke-width="2" />
+
+    <!-- Main Legs Path -->
+    <path d="M 28 28 L 20 230 L 78 230 L 90 95 L 102 230 L 160 230 L 152 28 Z" fill="url(#fabric-denim)" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Center Fly Seam -->
+    <path d="M 90 28 L 90 75 Q 90 85 82 92" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3,2" />
+
+    <!-- Pockets -->
+    <path d="M 32 34 L 55 60" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3,2" />
+    <path d="M 148 34 L 125 60" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3,2" />
+
+    <!-- Cargo Pocket Left -->
+    <rect x="22" y="115" width="28" height="32" rx="3" fill="#1e293b" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,1" />
+
+    <!-- Knee Reflective Stripes -->
+    <rect x="23" y="160" width="48" height="10" fill="url(#refl-tape)" stroke="#94a3b8" stroke-width="0.8" />
+    <rect x="109" y="160" width="48" height="10" fill="url(#refl-tape)" stroke="#94a3b8" stroke-width="0.8" />
+
+    <!-- Ankle Reflective Stripes / Hem -->
+    <rect x="20" y="215" width="58" height="8" fill="url(#refl-tape)" stroke="#94a3b8" stroke-width="0.8" />
+    <rect x="102" y="215" width="58" height="8" fill="url(#refl-tape)" stroke="#94a3b8" stroke-width="0.8" />
+
+    <!-- Inner Leg Seams -->
+    <line x1="88" y1="95" x2="76" y2="230" stroke="#1d4ed8" stroke-width="1.2" />
+    <line x1="92" y1="95" x2="104" y2="230" stroke="#1d4ed8" stroke-width="1.2" />
+  </g>
+
+  <!-- Technical specs legend -->
+  <g transform="translate(20, 275)" font-family="monospace" font-size="9" fill="#64748b">
+    <text x="0" y="0">CALÇA OPERACIONAL / BRIM PESADO / EPI WORKWEAR</text>
+  </g>
+</svg>

@@ -13,7 +13,6 @@ export interface CatalogItem {
   descricao: string;
   categoria: string;
   subcategoria?: string;
-  descricaoExtra?: string;
   materialGroup?: string;
   materialStructure?: string;
   fabricante?: string;
