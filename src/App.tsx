@@ -21,8 +21,8 @@ import { SupabaseTestModal } from './components/SupabaseTestModal';
 import { DataImporter } from './components/DataImporter';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v13';
-const PREV_STORAGE_KEYS = ['cm_catalog_items_v12', 'cm_catalog_items_v11', 'cm_catalog_items_v10', 'cm_catalog_items_v9', 'cm_catalog_items_v8', 'cm_catalog_items_v7', 'cm_catalog_items_v6'];
+const STORAGE_KEY = 'cm_catalog_items_v14';
+const PREV_STORAGE_KEYS = ['cm_catalog_items_v13', 'cm_catalog_items_v12', 'cm_catalog_items_v11', 'cm_catalog_items_v10', 'cm_catalog_items_v9', 'cm_catalog_items_v8', 'cm_catalog_items_v7', 'cm_catalog_items_v6'];
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
@@ -80,7 +80,7 @@ export default function App() {
                 if (item.favorito || (item.documentos && item.documentos.length > 0) || item.imagemUrl) {
                   userCustomMap.set(item.codigo, item);
                 }
-                if (!initialCodes.has(item.codigo)) {
+                if (!initialCodes.has(item.codigo) && !item.codigo?.startsWith('SG-')) {
                   customNewItems.push({
                     ...item,
                     categoria: normalizeItemCategory(item.categoria),
