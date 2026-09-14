@@ -21,8 +21,8 @@ import { SupabaseTestModal } from './components/SupabaseTestModal';
 import { DataImporter } from './components/DataImporter';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v8';
-const PREV_STORAGE_KEYS = ['cm_catalog_items_v7', 'cm_catalog_items_v6'];
+const STORAGE_KEY = 'cm_catalog_items_v9';
+const PREV_STORAGE_KEYS = ['cm_catalog_items_v8', 'cm_catalog_items_v7', 'cm_catalog_items_v6'];
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
@@ -35,45 +35,45 @@ export default function App() {
         if (Array.isArray(parsed) && parsed.length >= INITIAL_CATALOG_ITEMS.length) {
           return parsed;
         }
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const parsedCodeMap = new Map(parsed.map((item: CatalogItem) => [item.codigo, item]));
-          const merged = [...parsed];
-          for (const initItem of INITIAL_CATALOG_ITEMS) {
-            if (!parsedCodeMap.has(initItem.codigo)) {
-              merged.push(initItem);
-            }
-          }
-          if (merged.length >= INITIAL_CATALOG_ITEMS.length) {
-            return merged;
-          }
-        }
       }
 
-      // Check previous storage versions to migrate favorites and custom documents
+      // Migração de versões anteriores preservando favoritos, fotos e anexos do usuário
       for (const prevKey of PREV_STORAGE_KEYS) {
         const prevSaved = localStorage.getItem(prevKey);
         if (prevSaved) {
-          const prevParsed = JSON.parse(prevSaved);
-          if (Array.isArray(prevParsed) && prevParsed.length > 0) {
-            const userCustomMap = new Map();
-            for (const item of prevParsed) {
-              if (item.favorito || (item.documentos && item.documentos.length > 0)) {
-                userCustomMap.set(item.codigo, item);
+          try {
+            const prevParsed = JSON.parse(prevSaved);
+            if (Array.isArray(prevParsed) && prevParsed.length > 0) {
+              const userCustomMap = new Map();
+              const customNewItems: CatalogItem[] = [];
+              const initialCodes = new Set(INITIAL_CATALOG_ITEMS.map((i) => i.codigo));
+
+              for (const item of prevParsed) {
+                if (item.favorito || (item.documentos && item.documentos.length > 0) || item.imagemUrl) {
+                  userCustomMap.set(item.codigo, item);
+                }
+                if (!initialCodes.has(item.codigo)) {
+                  customNewItems.push(item);
+                }
               }
-            }
-            if (userCustomMap.size > 0) {
-              return INITIAL_CATALOG_ITEMS.map((item) => {
+
+              const baseCatalog = INITIAL_CATALOG_ITEMS.map((item) => {
                 const userEdit = userCustomMap.get(item.codigo);
                 if (userEdit) {
                   return {
                     ...item,
                     favorito: userEdit.favorito ?? item.favorito,
                     documentos: userEdit.documentos?.length ? userEdit.documentos : item.documentos,
+                    imagemUrl: userEdit.imagemUrl || item.imagemUrl,
                   };
                 }
                 return item;
               });
+
+              return [...baseCatalog, ...customNewItems];
             }
+          } catch (err) {
+            console.warn('Erro ao migrar dados de versão anterior:', err);
           }
         }
       }

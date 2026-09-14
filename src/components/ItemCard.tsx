@@ -104,10 +104,15 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         </div>
 
         {/* Category Badge placed below the image box */}
-        <div className="mb-2">
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
           <span className="inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded-xs uppercase font-mono">
             {item.categoria}
           </span>
+          {item.subcategoria && (
+            <span className="inline-block px-1.5 py-0.5 text-[9px] font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-xs">
+              {item.subcategoria}
+            </span>
+          )}
         </div>
 
         {/* Item Code (Prominent Monospace) */}

@@ -330,9 +330,16 @@ export const AdminView: React.FC<AdminViewProps> = ({
                           {item.descricao}
                         </td>
                         <td className="py-2.5 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 text-[10px] font-bold text-cyan-800 bg-cyan-50 rounded uppercase font-mono">
-                            {item.categoria}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="px-2 py-0.5 text-[10px] font-bold text-[#1A3282] bg-blue-50 border border-blue-100 rounded uppercase font-mono w-fit">
+                              {item.categoria}
+                            </span>
+                            {item.subcategoria && (
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                {item.subcategoria}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-4 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">

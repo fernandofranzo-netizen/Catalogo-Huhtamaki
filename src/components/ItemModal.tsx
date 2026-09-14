@@ -19,7 +19,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
   categories,
 }) => {
   const [codigo, setCodigo] = useState('');
-  const [categoria, setCategoria] = useState(categories[1] || 'ROLAMENTOS');
+  const [categoria, setCategoria] = useState(categories[1] || 'MATERIAL MECÂNICO');
   const [descricao, setDescricao] = useState('');
   const [fabricante, setFabricante] = useState('');
   const [dimensao, setDimensao] = useState('');
@@ -318,7 +318,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
             id: itemToEdit ? itemToEdit.id : 'item-preview',
             codigo: codigo.trim() || 'NOVO-ITEM',
             descricao: descricao.trim() || 'Novo Item',
-            categoria: categoria || 'ROLAMENTOS',
+            categoria: categoria || 'MATERIAL MECÂNICO',
             fabricante: fabricante || undefined,
             imagemUrl: imagemUrl || undefined,
             palavrasChave: palavrasChaveStr.split(',').map((s) => s.trim()).filter(Boolean),

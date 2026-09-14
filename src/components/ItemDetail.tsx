@@ -55,10 +55,15 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
       {/* Main Header with Code & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#1A3282] bg-[#eff6ff] border border-[#bfdbfe] rounded uppercase font-mono">
               {item.categoria}
             </span>
+            {item.subcategoria && (
+              <span className="inline-block px-2 py-0.5 text-[11px] font-semibold text-slate-700 bg-slate-100 border border-slate-300 rounded font-sans">
+                {item.subcategoria}
+              </span>
+            )}
             <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
               HUHTAMAKI // ITEM TÉCNICO
             </span>
@@ -219,6 +224,27 @@ export const ItemDetail: React.FC<ItemDetailProps> = ({
                 <dt className="text-slate-400 uppercase font-mono text-[11px] font-bold">Categoria</dt>
                 <dd className="col-span-2 font-medium text-slate-800">{item.categoria}</dd>
               </div>
+
+              {item.subcategoria && (
+                <div className="py-2.5 grid grid-cols-3 gap-2">
+                  <dt className="text-slate-400 uppercase font-mono text-[11px] font-bold">Subcategoria</dt>
+                  <dd className="col-span-2 font-medium text-slate-800 flex items-center gap-1.5">
+                    <span>{item.subcategoria}</span>
+                    {item.materialStructure && (
+                      <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                        [{item.materialStructure}]
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              {item.materialGroup && (
+                <div className="py-2.5 grid grid-cols-3 gap-2">
+                  <dt className="text-slate-400 uppercase font-mono text-[11px] font-bold">Material Group</dt>
+                  <dd className="col-span-2 font-mono text-xs text-slate-700">{item.materialGroup}</dd>
+                </div>
+              )}
 
               <div className="py-2.5 grid grid-cols-3 gap-2">
                 <dt className="text-slate-400 uppercase font-mono text-[11px] font-bold flex items-center gap-1">

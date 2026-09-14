@@ -54,8 +54,11 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
           const matchFabr = item.fabricante?.toLowerCase().includes(term);
           const matchDim = item.dimensao?.toLowerCase().includes(term);
           const matchLoc = item.localizacao?.toLowerCase().includes(term);
+          const matchSubcat = item.subcategoria?.toLowerCase().includes(term);
+          const matchCat = item.categoria?.toLowerCase().includes(term);
+          const matchMatStruct = item.materialStructure?.toLowerCase().includes(term);
           const matchTags = item.palavrasChave?.some((tag) => tag.toLowerCase().includes(term));
-          if (!matchCode && !matchDesc && !matchFabr && !matchDim && !matchLoc && !matchTags) {
+          if (!matchCode && !matchDesc && !matchFabr && !matchDim && !matchLoc && !matchTags && !matchSubcat && !matchCat && !matchMatStruct) {
             return false;
           }
         }

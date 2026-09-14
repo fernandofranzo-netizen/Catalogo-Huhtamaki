@@ -15,7 +15,7 @@ const SAMPLE_JSON = `[
   {
     "codigo": "MM-REPOS-00999-00",
     "descricao": "ROLAMENTO AUTOCOMPENSADOR SKF 22210 - 50 x 90 x 23mm",
-    "categoria": "ROLAMENTOS",
+    "categoria": "MATERIAL MECÂNICO",
     "fabricante": "SKF",
     "dimensao": "50 x 90 x 23mm",
     "localizacao": "Almoxarifado Central - Prateleira B-09",
