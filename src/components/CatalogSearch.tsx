@@ -3,10 +3,17 @@ import { Search, Plus, X, LayoutGrid, List, SlidersHorizontal, ArrowUpDown, File
 import { CatalogItem, UserRole } from '../types';
 import { ItemCard } from './ItemCard';
 import { resolveItemImage } from '../utils/technicalImages';
+import {
+  CONSUMO_GERAL_CATEGORIAS,
+  CONSUMO_MANUTENCAO_CATEGORIAS,
+  OUTRAS_CATEGORIAS,
+} from '../data/initialCatalog';
 
 interface CatalogSearchProps {
   items: CatalogItem[];
   categories: readonly string[];
+  selectedCategory?: string;
+  onSelectCategory?: (category: string) => void;
   onSelectItem: (item: CatalogItem) => void;
   onOpenNewModal: () => void;
   onToggleFavorite?: (id: string) => void;
@@ -21,6 +28,8 @@ interface CatalogSearchProps {
 export const CatalogSearch: React.FC<CatalogSearchProps> = ({
   items,
   categories,
+  selectedCategory,
+  onSelectCategory,
   onSelectItem,
   onOpenNewModal,
   onToggleFavorite,
@@ -32,7 +41,17 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
   onOpenImageManager,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('TODOS');
+  const [internalCategory, setInternalCategory] = useState('TODOS');
+  const activeCategory = selectedCategory !== undefined ? selectedCategory : internalCategory;
+
+  const setActiveCategory = (cat: string) => {
+    if (onSelectCategory) {
+      onSelectCategory(cat);
+    } else {
+      setInternalCategory(cat);
+    }
+  };
+
   const [sortBy, setSortBy] = useState<'codigo-asc' | 'codigo-desc' | 'descricao' | 'recentes'>('codigo-asc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,7 +59,23 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, sortBy]);
+  }, [searchTerm, activeCategory, sortBy]);
+
+  // Compute category counts
+  const { countsByCategory, consumoGeralTotal, consumoManutencaoTotal } = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of items) {
+      const cat = item.categoria === 'MATERIAL DIVERSO' ? 'MATERIAIS DIVERSOS' : item.categoria;
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    const cGeral = CONSUMO_GERAL_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
+    const cManut = CONSUMO_MANUTENCAO_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
+    return {
+      countsByCategory: counts,
+      consumoGeralTotal: cGeral,
+      consumoManutencaoTotal: cManut,
+    };
+  }, [items]);
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
@@ -71,9 +106,16 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
           }
         }
 
-        // Category filter
-        if (selectedCategory !== 'TODOS' && item.categoria !== selectedCategory) {
-          return false;
+        // Category filter (Single category or Block)
+        if (activeCategory !== 'TODOS') {
+          const itemCat = item.categoria === 'MATERIAL DIVERSO' ? 'MATERIAIS DIVERSOS' : item.categoria;
+          if (activeCategory === 'GRUPO:CONSUMO_GERAL') {
+            if (!CONSUMO_GERAL_CATEGORIAS.includes(itemCat as any)) return false;
+          } else if (activeCategory === 'GRUPO:CONSUMO_MANUTENCAO') {
+            if (!CONSUMO_MANUTENCAO_CATEGORIAS.includes(itemCat as any)) return false;
+          } else if (itemCat !== activeCategory && item.categoria !== activeCategory) {
+            return false;
+          }
         }
 
         return true;
@@ -85,7 +127,7 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
         if (sortBy === 'recentes') return (b.dataCriacao || '').localeCompare(a.dataCriacao || '');
         return 0;
       });
-  }, [items, searchTerm, selectedCategory, sortBy]);
+  }, [items, searchTerm, activeCategory, sortBy]);
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
   const paginatedItems = useMemo(() => {
@@ -95,10 +137,10 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('TODOS');
+    setActiveCategory('TODOS');
   };
 
-  const hasActiveFilters = searchTerm !== '' || selectedCategory !== 'TODOS';
+  const hasActiveFilters = searchTerm !== '' || activeCategory !== 'TODOS';
 
   return (
     <div className="space-y-6">
@@ -165,44 +207,41 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
             )}
           </div>
 
-          {/* Category Dropdown */}
+          {/* Category Dropdown with Consumo Geral and Consumo Manutenção Optgroups */}
           <div className="md:col-span-4 lg:col-span-3">
             <select
               id="select-category-catalog"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
               className="w-full py-2.5 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-hidden focus:ring-2 focus:ring-[#3F78CC]/30 focus:border-[#1A3282] text-slate-700 font-medium"
             >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === 'TODOS' ? 'Todas as categorias' : cat}
-                </option>
-              ))}
+              <option value="TODOS">Todas as categorias ({items.length})</option>
+              <optgroup label="Consumo Geral">
+                <option value="GRUPO:CONSUMO_GERAL">Todos em Consumo Geral ({consumoGeralTotal})</option>
+                {CONSUMO_GERAL_CATEGORIAS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat} ({countsByCategory[cat] || 0})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Consumo Manutenção">
+                <option value="GRUPO:CONSUMO_MANUTENCAO">Todos em Consumo Manutenção ({consumoManutencaoTotal})</option>
+                {CONSUMO_MANUTENCAO_CATEGORIAS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat} ({countsByCategory[cat] || 0})
+                  </option>
+                ))}
+              </optgroup>
+              {OUTRAS_CATEGORIAS.length > 0 && (
+                <optgroup label="Outras Categorias">
+                  {OUTRAS_CATEGORIAS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat} ({countsByCategory[cat] || 0})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
-          </div>
-        </div>
-
-        {/* Category Wrap Pills matching Huhtamaki brand colors */}
-        <div className="pt-2.5 border-t border-slate-100">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  id={`btn-cat-chip-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 text-[11px] font-mono font-bold uppercase rounded-xs tracking-wider transition-all border ${
-                    isActive
-                      ? 'bg-[#1A3282] hover:bg-[#152869] text-white border-[#152869] shadow-xs'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
           </div>
         </div>
 
@@ -229,7 +268,7 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                     setSearchTerm('');
                   } else {
                     setSearchTerm(kw.term);
-                    setSelectedCategory('TODOS');
+                    setActiveCategory('TODOS');
                   }
                 }}
                 className={`px-2.5 py-0.5 text-[11px] font-mono rounded-full transition-all border ${

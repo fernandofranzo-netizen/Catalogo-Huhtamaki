@@ -21,10 +21,15 @@ import { SupabaseTestModal } from './components/SupabaseTestModal';
 import { DataImporter } from './components/DataImporter';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v12';
-const PREV_STORAGE_KEYS = ['cm_catalog_items_v11', 'cm_catalog_items_v10', 'cm_catalog_items_v9', 'cm_catalog_items_v8', 'cm_catalog_items_v7', 'cm_catalog_items_v6'];
+const STORAGE_KEY = 'cm_catalog_items_v13';
+const PREV_STORAGE_KEYS = ['cm_catalog_items_v12', 'cm_catalog_items_v11', 'cm_catalog_items_v10', 'cm_catalog_items_v9', 'cm_catalog_items_v8', 'cm_catalog_items_v7', 'cm_catalog_items_v6'];
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
+
+const normalizeItemCategory = (cat: string): string => {
+  if (cat === 'MATERIAL DIVERSO') return 'MATERIAIS DIVERSOS';
+  return cat;
+};
 
 export default function App() {
   const [items, setItems] = useState<CatalogItem[]>(() => {
@@ -33,13 +38,18 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          const sanitized = parsed.filter(
-            (i) =>
-              !i.codigo?.startsWith('SE-') &&
-              i.categoria !== 'SERVIÇOS' &&
-              i.categoria !== 'SERVICOS' &&
-              i.codigo !== 'MM-PNEUM-00110-00'
-          );
+          const sanitized = parsed
+            .filter(
+              (i) =>
+                !i.codigo?.startsWith('SE-') &&
+                i.categoria !== 'SERVIÇOS' &&
+                i.categoria !== 'SERVICOS' &&
+                i.codigo !== 'MM-PNEUM-00110-00'
+            )
+            .map((i) => ({
+              ...i,
+              categoria: normalizeItemCategory(i.categoria),
+            }));
           if (sanitized.length >= INITIAL_CATALOG_ITEMS.length) {
             return sanitized;
           }
@@ -71,7 +81,10 @@ export default function App() {
                   userCustomMap.set(item.codigo, item);
                 }
                 if (!initialCodes.has(item.codigo)) {
-                  customNewItems.push(item);
+                  customNewItems.push({
+                    ...item,
+                    categoria: normalizeItemCategory(item.categoria),
+                  });
                 }
               }
 
@@ -102,6 +115,7 @@ export default function App() {
   });
 
   const [currentView, setCurrentView] = useState<ViewMode>('catalog');
+  const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<CatalogItem | null>(null);
@@ -414,7 +428,13 @@ export default function App() {
         }}
         isOpenMobile={isMobileSidebarOpen}
         onToggleMobile={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        itemCount={items.length}
+        items={items}
+        selectedCategory={selectedCategory}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setCurrentView('catalog');
+          setSelectedItem(null);
+        }}
         userRole={userRole}
         onPromptGestor={handlePromptGestor}
         onLogoutGestor={handleLogoutGestor}
@@ -494,6 +514,8 @@ export default function App() {
             <CatalogSearch
               items={items}
               categories={CATEGORIAS_PADRAO}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
               onSelectItem={handleSelectItem}
               onOpenNewModal={handleOpenNewModal}
               onToggleFavorite={handleToggleFavorite}

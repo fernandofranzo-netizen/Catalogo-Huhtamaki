@@ -1,13 +1,34 @@
-import React from 'react';
-import { Search, SlidersHorizontal, Menu, X, Shield, LogOut, Lock, Database, Upload } from 'lucide-react';
-import { ViewMode, UserRole } from '../types';
+import React, { useState, useMemo } from 'react';
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  Shield,
+  LogOut,
+  Lock,
+  Database,
+  Upload,
+  Package,
+  Wrench,
+  Layers,
+  ChevronDown,
+  ChevronRight,
+} from 'lucide-react';
+import { ViewMode, UserRole, CatalogItem } from '../types';
+import {
+  CONSUMO_GERAL_CATEGORIAS,
+  CONSUMO_MANUTENCAO_CATEGORIAS,
+  OUTRAS_CATEGORIAS,
+} from '../data/initialCatalog';
 
 interface SidebarProps {
   currentView: ViewMode;
   onNavigate: (view: ViewMode) => void;
   isOpenMobile: boolean;
   onToggleMobile: () => void;
-  itemCount: number;
+  items: CatalogItem[];
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
   userRole?: UserRole;
   onPromptGestor?: () => void;
   onLogoutGestor?: () => void;
@@ -15,18 +36,79 @@ interface SidebarProps {
   onOpenDataImporter?: () => void;
 }
 
+function formatCategoryName(name: string): string {
+  const map: Record<string, string> = {
+    'MATERIAL AUXILIAR DE PRODUÇÃO': 'Material Auxiliar de Produção',
+    'MATERIAL DE EMBALAGENS': 'Material de Embalagens',
+    'MATERIAIS DE ESCRITÓRIO': 'Materiais de Escritório',
+    'MATERIAIS DE LIMPEZA': 'Materiais de Limpeza',
+    'MATERIAIS DE SEGURANÇA': 'Materiais de Segurança',
+    'MATERIAIS DE USO/CONSUMO': 'Materiais de Uso/Consumo',
+    'MATERIAIS DIVERSOS': 'Materiais Diversos',
+    'MATERIAL DIVERSO': 'Materiais Diversos',
+    'UNIFORMES': 'Uniformes',
+    'MATERIAL ELÉTRICO': 'Material Elétrico',
+    'MATERIAL MECÂNICO': 'Material Mecânico',
+    'UTILITES-GÁS': 'Utilites-Gás',
+  };
+  return map[name] || name;
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onNavigate,
   isOpenMobile,
   onToggleMobile,
-  itemCount,
+  items,
+  selectedCategory,
+  onSelectCategory,
   userRole,
   onPromptGestor,
   onLogoutGestor,
   onOpenSupabaseTest,
   onOpenDataImporter,
 }) => {
+  const [isConsumoGeralOpen, setIsConsumoGeralOpen] = useState(true);
+  const [isConsumoManutencaoOpen, setIsConsumoManutencaoOpen] = useState(true);
+  const [isOutrosOpen, setIsOutrosOpen] = useState(false);
+
+  // Compute item counts by category and group
+  const { countsByCategory, consumoGeralTotal, consumoManutencaoTotal, outrosTotal, outrosCategoriasList } = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of items) {
+      const cat = item.categoria === 'MATERIAL DIVERSO' ? 'MATERIAIS DIVERSOS' : item.categoria;
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    const cGeral = CONSUMO_GERAL_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
+    const cManut = CONSUMO_MANUTENCAO_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
+
+    const extraCats: string[] = [];
+    let extraTotal = 0;
+    for (const cat of Object.keys(counts)) {
+      if (
+        !CONSUMO_GERAL_CATEGORIAS.includes(cat as any) &&
+        !CONSUMO_MANUTENCAO_CATEGORIAS.includes(cat as any)
+      ) {
+        extraCats.push(cat);
+        extraTotal += counts[cat];
+      }
+    }
+
+    return {
+      countsByCategory: counts,
+      consumoGeralTotal: cGeral,
+      consumoManutencaoTotal: cManut,
+      outrosTotal: extraTotal,
+      outrosCategoriasList: extraCats,
+    };
+  }, [items]);
+
+  const handleSelect = (category: string) => {
+    onSelectCategory(category);
+    onNavigate('catalog');
+    if (isOpenMobile) onToggleMobile();
+  };
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -43,8 +125,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header with Logo restored to CM badge converted to Huhtamaki colors */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800/80 bg-[#080e1f]">
+        {/* Header with Logo */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-800/80 bg-[#080e1f]">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 font-black text-white bg-gradient-to-br from-[#3F78CC] to-[#1A3282] rounded-lg shadow-sm border border-[#3F78CC]/30 tracking-tight text-base">
               CM
@@ -70,8 +152,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Navigation items */}
-        <div className="flex-1 px-3 py-6 space-y-6 overflow-y-auto">
+        {/* Navigation Content */}
+        <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
           {userRole === 'gestor' && (
             <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center justify-between text-[11px] font-mono text-amber-300">
               <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
@@ -82,33 +164,236 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
+          {/* NAVEGAÇÃO */}
           <div>
-            <div className="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono">
-              NAVEGAÇÃO
+            <div className="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono flex items-center justify-between">
+              <span>NAVEGAÇÃO</span>
             </div>
-            <nav className="space-y-1.5">
+
+            <nav className="space-y-2">
+              {/* Consulta de itens (Todos) */}
               <button
                 id="nav-btn-consulta"
                 type="button"
-                onClick={() => {
-                  onNavigate('catalog');
-                  if (isOpenMobile) onToggleMobile();
-                }}
-                className={`flex items-center justify-between w-full px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                  currentView === 'catalog' || currentView === 'detail'
+                onClick={() => handleSelect('TODOS')}
+                className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                  currentView === 'catalog' && selectedCategory === 'TODOS'
                     ? 'bg-slate-850 text-white border-l-4 border-[#3f78cc] shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
+                title="Consultar todos os itens do catálogo"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Search className="w-4 h-4 text-[#3f78cc]" />
                   <span>Consulta de itens</span>
                 </div>
-                <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium text-slate-400 bg-slate-800 rounded">
-                  {itemCount}
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-300 bg-slate-800 rounded">
+                  {items.length}
                 </span>
               </button>
 
+              {/* BLOCO 1: Consumo Geral */}
+              <div className="rounded-lg bg-slate-900/40 border border-slate-800/60 p-1 space-y-1">
+                <div
+                  className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                    currentView === 'catalog' && selectedCategory === 'GRUPO:CONSUMO_GERAL'
+                      ? 'bg-sky-950/80 text-sky-200 border-l-2 border-[#38bdf8]'
+                      : 'text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <button
+                    id="nav-btn-consumo-geral"
+                    type="button"
+                    onClick={() => handleSelect('GRUPO:CONSUMO_GERAL')}
+                    className="flex items-center gap-2 flex-1 text-left"
+                    title="Filtrar por todo o Consumo Geral"
+                  >
+                    <Package className="w-3.5 h-3.5 text-[#38bdf8]" />
+                    <span className="tracking-wide">Consumo Geral</span>
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold text-sky-300 bg-sky-950/90 border border-sky-800/50 rounded">
+                      {consumoGeralTotal}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsConsumoGeralOpen(!isConsumoGeralOpen);
+                      }}
+                      className="p-0.5 text-slate-400 hover:text-white rounded"
+                      title={isConsumoGeralOpen ? 'Recolher categorias' : 'Expandir categorias'}
+                    >
+                      {isConsumoGeralOpen ? (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subcategorias do Consumo Geral */}
+                {isConsumoGeralOpen && (
+                  <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
+                    {CONSUMO_GERAL_CATEGORIAS.map((cat) => {
+                      const isActive = currentView === 'catalog' && selectedCategory === cat;
+                      const count = countsByCategory[cat] || 0;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          id={`nav-cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                          onClick={() => handleSelect(cat)}
+                          className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
+                            isActive
+                              ? 'bg-[#1A3282] text-white font-bold shadow-xs'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                          }`}
+                          title={`Filtrar por ${cat}`}
+                        >
+                          <span className="truncate pr-1">{formatCategoryName(cat)}</span>
+                          <span className="font-mono text-[10px] text-slate-500 shrink-0">
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* BLOCO 2: Consumo Manutenção */}
+              <div className="rounded-lg bg-slate-900/40 border border-slate-800/60 p-1 space-y-1">
+                <div
+                  className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                    currentView === 'catalog' && selectedCategory === 'GRUPO:CONSUMO_MANUTENCAO'
+                      ? 'bg-amber-950/80 text-amber-200 border-l-2 border-amber-400'
+                      : 'text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <button
+                    id="nav-btn-consumo-manutencao"
+                    type="button"
+                    onClick={() => handleSelect('GRUPO:CONSUMO_MANUTENCAO')}
+                    className="flex items-center gap-2 flex-1 text-left"
+                    title="Filtrar por todo o Consumo Manutenção"
+                  >
+                    <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="tracking-wide">Consumo Manutenção</span>
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 border border-amber-800/50 rounded">
+                      {consumoManutencaoTotal}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsConsumoManutencaoOpen(!isConsumoManutencaoOpen);
+                      }}
+                      className="p-0.5 text-slate-400 hover:text-white rounded"
+                      title={isConsumoManutencaoOpen ? 'Recolher categorias' : 'Expandir categorias'}
+                    >
+                      {isConsumoManutencaoOpen ? (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subcategorias do Consumo Manutenção */}
+                {isConsumoManutencaoOpen && (
+                  <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
+                    {CONSUMO_MANUTENCAO_CATEGORIAS.map((cat) => {
+                      const isActive = currentView === 'catalog' && selectedCategory === cat;
+                      const count = countsByCategory[cat] || 0;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          id={`nav-cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                          onClick={() => handleSelect(cat)}
+                          className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
+                            isActive
+                              ? 'bg-[#1A3282] text-white font-bold shadow-xs'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                          }`}
+                          title={`Filtrar por ${cat}`}
+                        >
+                          <span className="truncate pr-1">{formatCategoryName(cat)}</span>
+                          <span className="font-mono text-[10px] text-slate-500 shrink-0">
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Outras Categorias (Material Diverso, Segurança) */}
+              {outrosTotal > 0 && (
+                <div className="pt-1">
+                  <button
+                    id="nav-btn-outras-categorias"
+                    type="button"
+                    onClick={() => setIsOutrosOpen(!isOutrosOpen)}
+                    className="flex items-center justify-between w-full px-2.5 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 rounded-md transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3 h-3 text-slate-500" />
+                      <span>Outras Categorias</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono text-slate-500">{outrosTotal}</span>
+                      {isOutrosOpen ? (
+                        <ChevronDown className="w-3 h-3 text-slate-500" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3 text-slate-500" />
+                      )}
+                    </div>
+                  </button>
+
+                  {isOutrosOpen && (
+                    <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
+                      {outrosCategoriasList.map((cat) => {
+                        const isActive = currentView === 'catalog' && (selectedCategory === cat || (cat === 'MATERIAIS DIVERSOS' && selectedCategory === 'MATERIAL DIVERSO'));
+                        const count = countsByCategory[cat] || 0;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => handleSelect(cat)}
+                            className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
+                              isActive
+                                ? 'bg-[#1A3282] text-white font-bold shadow-xs'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                            }`}
+                          >
+                            <span className="truncate pr-1">{formatCategoryName(cat)}</span>
+                            <span className="font-mono text-[10px] text-slate-500 shrink-0">
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </nav>
+          </div>
+
+          {/* ADMINISTRAÇÃO & DADOS */}
+          <div className="pt-3 border-t border-slate-800/80 space-y-2">
+            <div className="px-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono">
+              ADMINISTRAÇÃO
+            </div>
+
+            <nav className="space-y-1.5">
               <button
                 id="nav-btn-admin"
                 type="button"
@@ -116,13 +401,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onNavigate('admin');
                   if (isOpenMobile) onToggleMobile();
                 }}
-                className={`flex items-center justify-between w-full px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+                className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
                   currentView === 'admin'
                     ? 'bg-slate-850 text-white border-l-4 border-[#f59e0b] shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <SlidersHorizontal className="w-4 h-4 text-[#f59e0b]" />
                   <span>Administração</span>
                 </div>
@@ -179,7 +464,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </nav>
           </div>
 
-          <div className="pt-2 px-1 space-y-2">
+          {/* Gestor Lock/Unlock */}
+          <div className="pt-2 px-1">
             {userRole === 'gestor' ? (
               <button
                 id="btn-sidebar-sair-gestor"
@@ -223,4 +509,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
 

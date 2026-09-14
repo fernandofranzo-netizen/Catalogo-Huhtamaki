@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Camera } from 'lucide-react';
 import { CatalogItem } from '../types';
 import { ImageManagerModal } from './ImageManagerModal';
+import { CONSUMO_GERAL_CATEGORIAS, CONSUMO_MANUTENCAO_CATEGORIAS } from '../data/initialCatalog';
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -149,13 +150,33 @@ export const ItemModal: React.FC<ItemModalProps> = ({
                 id="select-item-categoria"
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-2 focus:ring-[#3F78CC] focus:outline-hidden"
               >
-                {availableCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
+                <optgroup label="Consumo Geral">
+                  {CONSUMO_GERAL_CATEGORIAS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Consumo Manutenção">
+                  {CONSUMO_MANUTENCAO_CATEGORIAS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </optgroup>
+                {availableCategories
+                  .filter(
+                    (c) =>
+                      !CONSUMO_GERAL_CATEGORIAS.includes(c as any) &&
+                      !CONSUMO_MANUTENCAO_CATEGORIAS.includes(c as any)
+                  )
+                  .map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
