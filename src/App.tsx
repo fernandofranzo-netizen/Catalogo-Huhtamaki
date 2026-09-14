@@ -21,7 +21,8 @@ import { SupabaseTestModal } from './components/SupabaseTestModal';
 import { DataImporter } from './components/DataImporter';
 import { ToastContainer, ToastMessage } from './components/Toast';
 
-const STORAGE_KEY = 'cm_catalog_items_v7';
+const STORAGE_KEY = 'cm_catalog_items_v8';
+const PREV_STORAGE_KEYS = ['cm_catalog_items_v7', 'cm_catalog_items_v6'];
 const PIN_STORAGE_KEY = 'cm_gestor_pin_v1';
 const ROLE_STORAGE_KEY = 'cm_user_role_v1';
 
@@ -44,6 +45,35 @@ export default function App() {
           }
           if (merged.length >= INITIAL_CATALOG_ITEMS.length) {
             return merged;
+          }
+        }
+      }
+
+      // Check previous storage versions to migrate favorites and custom documents
+      for (const prevKey of PREV_STORAGE_KEYS) {
+        const prevSaved = localStorage.getItem(prevKey);
+        if (prevSaved) {
+          const prevParsed = JSON.parse(prevSaved);
+          if (Array.isArray(prevParsed) && prevParsed.length > 0) {
+            const userCustomMap = new Map();
+            for (const item of prevParsed) {
+              if (item.favorito || (item.documentos && item.documentos.length > 0)) {
+                userCustomMap.set(item.codigo, item);
+              }
+            }
+            if (userCustomMap.size > 0) {
+              return INITIAL_CATALOG_ITEMS.map((item) => {
+                const userEdit = userCustomMap.get(item.codigo);
+                if (userEdit) {
+                  return {
+                    ...item,
+                    favorito: userEdit.favorito ?? item.favorito,
+                    documentos: userEdit.documentos?.length ? userEdit.documentos : item.documentos,
+                  };
+                }
+                return item;
+              });
+            }
           }
         }
       }

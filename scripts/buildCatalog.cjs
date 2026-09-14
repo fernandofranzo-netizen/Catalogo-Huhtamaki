@@ -1,38 +1,94 @@
 const fs = require('fs');
 const path = require('path');
 
-const ocrFiles = [
-  path.join(__dirname, '../src/data/raw/ocr_pages_01_06.txt'),
-  path.join(__dirname, '../src/data/raw/ocr_pages_07_12.txt'),
-  path.join(__dirname, '../src/data/raw/ocr_pages_13_18.txt'),
-  path.join(__dirname, '../src/data/raw/ocr_pages_19_24.txt')
+// Master PDF files covering all 38 pages of the physical catalogue
+const pdfFiles = [
+  path.join(__dirname, '../src/data/raw/pdf_pages_01_10.txt'),
+  path.join(__dirname, '../src/data/raw/pdf_pages_11_20.txt'),
+  path.join(__dirname, '../src/data/raw/pdf_pages_21_30.txt'),
+  path.join(__dirname, '../src/data/raw/pdf_pages_31_38.txt'),
 ];
 
-// Map raw categories to standard categories
-function normalizeCategory(raw) {
-  const c = (raw || '').trim().toLowerCase();
-  if (c.includes('automação') || c.includes('automacao')) return 'AUTOMAÇÃO E CONTROLE';
-  if (c.includes('cabos') || c.includes('conector')) return 'CABOS E CONECTORES';
-  if (c.includes('comando') || c.includes('manobra')) return 'COMANDO E SINALIZAÇÃO';
-  if (c.includes('ferramenta')) return 'FERRAMENTAS E UTENSÍLIOS';
-  if (c.includes('filtro')) return 'FILTROS E LUBRIFICAÇÃO';
-  if (c.includes('fixa') || c.includes('fixar')) return 'FIXAÇÃO';
-  if (c.includes('fonte') || c.includes('eletr')) return 'FONTES E ELETRÔNICA';
-  if (c.includes('fus') || c.includes('prote')) return 'FUSÍVEIS E PROTEÇÃO ELÉTRICA';
-  if (c.includes('gas') || c.includes('gases')) return 'GASES E CONSUMÍVEIS';
-  if (c.includes('hidr')) return 'HIDRÁULICA';
-  if (c.includes('ilum')) return 'ILUMINAÇÃO ELÉTRICA';
-  if (c.includes('motor') || c.includes('transmiss')) return 'MOTORES E TRANSMISSÃO';
-  if (c.includes('pneum')) return 'PNEUMÁTICA';
-  if (c.includes('rolamento')) return 'ROLAMENTOS';
-  if (c.includes('ved')) return 'VEDAÇÃO';
-  if (c.includes('sensor') || c.includes('instrum')) return 'SENSORES E INSTRUMENTAÇÃO';
-  if (c.includes('seguran')) return 'SEGURANÇA E ACESSÓRIOS';
-  if (c.includes('óleo') || c.includes('oleo')) return 'ÓLEOS E CONSUMÍVEIS';
+// Load existing catalog items to preserve user customizations or existing documents/favoritos
+const existingPath = path.join(__dirname, '../src/data/catalogItems.json');
+let existingMap = new Map();
+if (fs.existsSync(existingPath)) {
+  try {
+    const existingData = JSON.parse(fs.readFileSync(existingPath, 'utf8'));
+    if (Array.isArray(existingData)) {
+      for (const item of existingData) {
+        existingMap.set(item.codigo, item);
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read existing catalog:', e.message);
+  }
+}
+
+// Map raw class codes and descriptions to standard UI categories
+function detectCategory(code, desc, classeDesc) {
+  const c = (code || '').toUpperCase();
+  const d = (desc || '').toUpperCase();
+  const cd = (classeDesc || '').toUpperCase();
+
+  if (c.includes('FIXAR') || /PARAFUSO|PORCA|ARRUELA|BARRA ROSCADA|CHAVETA|CHUMBADOR|REBITE/i.test(d)) return 'FIXAÇÃO';
+  if (c.includes('PNEUM') || /CILINDRO PNEUM|VALVULA.*PNEUM|VALVULA SOLENOIDE|REGULADOR.*FLUXO|GERADOR.*VACUO|ENGATE RAPIDO|TUBO.*PU|PUN-H|SILENCIADOR PNEUM/i.test(d)) return 'PNEUMÁTICA';
+  if (c.includes('LUBRI') || /GRAXA|OLEO LUBRIFICANTE|LUBRIFICANTE|KENDEX/i.test(d)) return 'FILTROS E LUBRIFICAÇÃO';
+  if (c.includes('VEDAC') || c.includes('ANEIS') || /O-RING|GAXETA|RETENTOR|JUNTA|CHEVRON|QUAD-RING|VEDACAO/i.test(d)) return 'VEDAÇÃO';
+  if (c.includes('CABOS') || /CABO.*PP|CABO FLEXIVEL|CONECTOR M12|CONECTOR MACHO RETO|BORNE|CONDULETE/i.test(d)) return 'CABOS E CONECTORES';
+  if (c.includes('FUSIV') || /FUSIVEL|DISJUNTOR|MINIDISJUNTOR|DPS|RELE TERMICO|SECCIONADORA/i.test(d)) return 'FUSÍVEIS E PROTEÇÃO ELÉTRICA';
+  if (c.includes('ILUMI') || /LAMPADA|LUMINARIA|PROJETOR LED|REATOR/i.test(d)) return 'ILUMINAÇÃO ELÉTRICA';
+  if (c.includes('SENSO') || /SENSOR|ENCODER|TRANSMISSOR|TERMOELEMENTO|TERMOPAR|PRESSOSTATO/i.test(d)) return 'SENSORES E INSTRUMENTAÇÃO';
+  if (c.includes('MOTOR') || /MOTOR ELETRICO|MOTOREDUTOR|INVERSOR DE FREQUENCIA|SERVO/i.test(d)) return 'MOTORES E TRANSMISSÃO';
+  if (/ROLAMENTO|MANCAL/i.test(d) || (c.includes('REPOS') && /ROLAMENTO|MANCAL|ESFERAS|AGULHA/i.test(d))) return 'ROLAMENTOS';
+  if (c.includes('FERRA') || c.includes('CORTE') || c.includes('ESPAT') || /CHAVE COMBINADA|CHAVE FIXA|ALICATE|MARTELO|TRENA|PAQUIMETRO|MICROMETRO|ESTILETE|SACADOR|ARCO DE SERRA/i.test(d)) return 'FERRAMENTAS E UTENSÍLIOS';
+  if (c.startsWith('SG-') || c.startsWith('UN-') || /BOTINA|LUVAS?|CAPACETE|OCULOS|RESPIRADOR|PROTETOR AURICULAR|AVENTAL|CALCA|CAMISA|UNIFORME|JALECO|MASCARA/i.test(d)) return 'SEGURANÇA E ACESSÓRIOS';
+  if (c.includes('CPELE')) {
+    if (/CLP|CARTAO|MODULO|FONTE|CPU|INTERFACE|PROFIBUS/i.test(d)) return 'AUTOMAÇÃO E CONTROLE';
+    if (/BOTAO|BOTOEIRA|CHAVE COMUTADORA|SINALEIRO|CONTATOR|RELE/i.test(d)) return 'COMANDO E SINALIZAÇÃO';
+    return 'AUTOMAÇÃO E CONTROLE';
+  }
+  if (c.includes('HIDRA') || /REGISTRO DE ESFERA|VALVULA REDUTORA DE PRESSAO DE AGUA|FILTRO Y PARA AGUA|VALVULA RETENCAO/i.test(d)) return 'HIDRÁULICA';
+  if (c.includes('ABRAS') || /LIXA|DISCO DE CORTE|REBOLO/i.test(d)) return 'FERRAMENTAS E UTENSÍLIOS';
+  if (cd.includes('SEGURANCA')) return 'SEGURANÇA E ACESSÓRIOS';
+  if (cd.includes('ELETRICO')) return 'AUTOMAÇÃO E CONTROLE';
+  if (cd.includes('MECANICO')) return 'OUTROS / REPOSIÇÃO';
   return 'OUTROS / REPOSIÇÃO';
 }
 
-// High-precision component image resolver mapping to technical CAD assets in /assets/components/
+const KNOWN_BRANDS = [
+  'FESTO', 'SMC', 'SICK', 'SKF', 'FAG', 'HYDAC', 'ALTUS', 'SIEMENS', 'DALMEC',
+  'WURTH', 'KAMPF', 'WEIDMULLER', 'OEMER', 'PIOVAN', 'BALLUFF', 'SABO',
+  'TRAPP', 'LOCTITE', 'SCHNEIDER', 'ABB', 'WEG', 'OMRON', 'PHOENIX CONTACT', 'PHOENIX',
+  'DANFOSS', 'PARKER', 'REXROTH', 'IFM', 'BANNER', 'MOELLER', 'EATON', 'B&R', 'BeR',
+  'GEDORE', 'BELZER', 'STARRETT', 'TRAMONTINA', 'MITUTOYO', '3M', 'TIGRE', 'DECA',
+  'LORENZETTI', 'GATES', 'CONTITECH', 'OPTIBELT', 'VISE-GRIP', 'BOZZA', 'KLUBER',
+  'MOBIL', 'KENDEX', 'ROCOL', 'TECFIL', 'MANN', 'PILZ', 'PEPPERL', 'PEPPERL+FUCHS',
+  'TURCK', 'KEYENCE', 'FINDER', 'COEL', 'NOVUS', 'FLUKE', 'BILSTEIN', 'IRANI',
+  'STYROPLAST', 'NORTON', 'CARBO'
+];
+
+function detectBrand(text, extra) {
+  const combined = `${text} ${extra || ''}`.toUpperCase();
+  for (const b of KNOWN_BRANDS) {
+    const escaped = b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    if (regex.test(combined)) {
+      if (b === 'BeR') return 'B&R';
+      return b;
+    }
+  }
+  return undefined;
+}
+
+function detectDimension(text) {
+  const t = text.toUpperCase();
+  // Match M10X30, M6, 1/4", 1/2", 8MM, 1000X1000, 24V, 5500W, etc.
+  const match = t.match(/\b(M\d+(?:[X,]\d+)?(?:\s*MM)?|\d+(?:\.\d+)?(?:\/\d+)?(?:"|''|POL)|\d+X\d+(?:X\d+)?(?:MM|CM)?|\d+\s*MM|\d+\s*V|\d+\s*W|\d+\s*KG|\d+\s*BAR)\b/);
+  return match ? match[1].trim() : undefined;
+}
+
+// Component image resolver mapping to technical CAD assets in /assets/components/
 function getComponentImageUrl(codigo, descricao, categoria) {
   const c = (codigo || '').toUpperCase();
   const d = (descricao || '').toUpperCase();
@@ -44,8 +100,8 @@ function getComponentImageUrl(codigo, descricao, categoria) {
     return '/assets/components/anel-elastico.svg';
   }
 
-  // 2. Rolamentos de esferas e rolos
-  if (/ROLAMENTO|6204|63\/28|MANCAL|BEARING/i.test(all)) {
+  // 2. Rolamentos
+  if (/ROLAMENTO|6204|63\/28|MANCAL|BEARING|ESFERAS|CONICOS|AGULHA/i.test(all)) {
     return '/assets/components/rolamento.svg';
   }
 
@@ -69,7 +125,7 @@ function getComponentImageUrl(codigo, descricao, categoria) {
     return '/assets/components/parafuso-allen-abaulado.svg';
   }
 
-  // 7. Parafuso Allen Sem Cabeça (Bujão / Set screw)
+  // 7. Parafuso Allen Sem Cabeça
   if (/SEM CABECA|SEM\/CAB|BUJAO|DIN 913|DIN 914|DIN 916/i.test(all)) {
     return '/assets/components/parafuso-sem-cabeca.svg';
   }
@@ -84,7 +140,7 @@ function getComponentImageUrl(codigo, descricao, categoria) {
     return '/assets/components/parafuso-sextavado.svg';
   }
 
-  // 10. Arruelas de pressão e lisas
+  // 10. Arruelas
   if (/ARRUELA/i.test(all)) {
     return '/assets/components/arruela.svg';
   }
@@ -99,103 +155,103 @@ function getComponentImageUrl(codigo, descricao, categoria) {
     return '/assets/components/parafuso-sextavado.svg';
   }
 
-  // 13. CLP / Módulos de Automação
-  if (/CLP|PLC|EXPANSAO.*ETHERNET|ALTUS|CONTROLADOR|6ES7|X20|MODULO ELETRONICO|MODULO DIGITALIZACAO|MODULO DE ENTRADA|MODULO DE SAIDA|RACK MOD|IO MUX/i.test(all)) {
-    return '/assets/components/clp-modulo.svg';
-  }
-
-  // 14. Encoders
-  if (/ENCODER|DFS60|SICK.*AD-/i.test(all)) {
-    return '/assets/components/encoder.svg';
-  }
-
-  // 15. Inversores e Soft-starters
-  if (/INVERSOR|MICROMASTER|DRIVE|VFD|SOFT.*STARTER|SSW05/i.test(all)) {
-    return '/assets/components/inversor.svg';
-  }
-
-  // 16. Disjuntores e Contatores
-  if (/DISJUNTOR|CONTATOR|RELE/i.test(all)) {
-    return '/assets/components/disjuntor.svg';
-  }
-
-  // 17. Fusíveis NH
-  if (/FUSIVEL.*NH|NH00|NH-00|NH1|NH2|NH3|500V.*100A|500V.*160A/i.test(all) || (/FUS/i.test(all) && /NH/i.test(all))) {
-    return '/assets/components/fusivel-nh.svg';
-  }
-
-  // 18. Outros fusíveis e proteção
-  if (/FUSIVEL|DIAZED/i.test(all)) {
-    return '/assets/components/fusivel-nh.svg';
-  }
-
-  // 19. Sensores Indutivos e Instrumentação
-  if (/SENSOR.*INDUT|SENSOR.*PROX|BALLUFF|M12.*PNP|M18/i.test(all)) {
-    return '/assets/components/sensor-indutivo.svg';
-  }
-
-  // 20. Válvulas Solenoide e Manifolds
-  if (/VALVULA.*SOLEN|VALVULA.*PNEUM|MANIFOLD|BLOCO DE VALVULA|PRE-SELETOR.*DALMEC/i.test(all)) {
-    return '/assets/components/valvula-pneumatica.svg';
-  }
-
-  // 21. Cilindros e Atuadores Pneumáticos
-  if (/CILINDRO.*PNEUM|ATUADOR.*PNEUM/i.test(all)) {
+  // 13. Cilindro Pneumático
+  if (/CILINDRO.*PNEUM|CILINDRO.*COMPAC|CILINDRO.*GUIA|CDQ2|CQ2|DSBC|MGPL|MGPM/i.test(all)) {
     return '/assets/components/cilindro-pneumatico.svg';
   }
 
-  // 22. Conexões Instantâneas e Mangueiras PU
-  if (/CONEXAO|ADAPTADOR.*TUB|ADAPTADOR.*RET|ENGATE.*RAPID|TUBO.*PU|MANGUEIRA.*PU|FESTO.*QS|KQ2H|PBT.*PC/i.test(all)) {
+  // 14. Válvulas Pneumáticas e Solenoides
+  if (/VALVULA.*SOLEN|VALVULA.*PNEUM|VUVG|SY[357]|VT307/i.test(all)) {
+    return '/assets/components/valvula-solenoide.svg';
+  }
+
+  // 15. Regulador de Pressão / Filtro Regulador
+  if (/REGULADOR.*PRESS|LFR|AW40|MS4-LR|MS6-LR/i.test(all)) {
+    return '/assets/components/regulador-pressao.svg';
+  }
+
+  // 16. Conexões Pneumáticas
+  if (/CONECTOR.*MACHO|ADAPTADOR.*RETO|UNIAO.*T|UNIAO.*Y|COTOVELO|REGULADOR.*FLUX|QS-|QSL-|QST-|KQ2/i.test(all)) {
     return '/assets/components/conexao-pneumatica.svg';
   }
 
-  // 23. Retentores, O-rings e Gaxetas
-  if (/RETENTOR|O-RING|ORING|GAXETA|ANEL VEDA|VEDACAO|SELO MECANICO/i.test(all)) {
-    return '/assets/components/retentor-oring.svg';
+  // 17. Tubos Pneumáticos
+  if (/TUBO.*FLEX|TUBO.*PU|PUN-H|POLIURETANO/i.test(all)) {
+    return '/assets/components/tubo-poliuretano.svg';
   }
 
-  // 24. Cabos Industriais e Conectores
-  if (/CABO|CONECTOR|BORNE|HARTING|DSUB|D-SUB|ACOPLADOR.*REDE|PLUG/i.test(all)) {
+  // 18. CLP / Módulos de I/O
+  if (/CLP|CARTAO.*ANALOG|CARTAO.*DIGIT|MODULO.*IO|CPU|7AI|7DI|7DO/i.test(all)) {
+    return '/assets/components/clp-modulo.svg';
+  }
+
+  // 19. Sensores Indutivos e Ópticos
+  if (/SENSOR|FOTOCELULA|ENCODER|PROXIMIDADE/i.test(all)) {
+    return '/assets/components/sensor-indutivo.svg';
+  }
+
+  // 20. Disjuntores e Mini-disjuntores
+  if (/DISJUNTOR|MINIDISJUNTOR|MOTOR.*DISJUNTOR|3RV|5SY/i.test(all)) {
+    return '/assets/components/disjuntor-motor.svg';
+  }
+
+  // 21. Contatores
+  if (/CONTATOR|MINICONTATOR|3RT|LC1D|CWB/i.test(all)) {
+    return '/assets/components/contator-eletrico.svg';
+  }
+
+  // 22. Relés Industriais
+  if (/RELE.*ACOPLAD|RELE.*TEMPO|RELE.*SEGURANCA|RELE.*INTERFACE/i.test(all)) {
+    return '/assets/components/rele-acoplador.svg';
+  }
+
+  // 23. Botões e Sinaleiros
+  if (/BOTAO|BOTOEIRA|SINALEIRO|CHAVE.*COMUTAD|PULSADOR/i.test(all)) {
+    return '/assets/components/botao-comando.svg';
+  }
+
+  // 24. Bornes de Passagem
+  if (/BORNE|CONECTOR.*PARAF|TERMINAL.*PAS/i.test(all)) {
+    return '/assets/components/borne-passagem.svg';
+  }
+
+  // 25. Fontes de Alimentação
+  if (/FONTE.*CHAVEADA|FONTE.*ALIMENTACAO|POWER SUPPLY/i.test(all)) {
+    return '/assets/components/fonte-chaveada.svg';
+  }
+
+  // 26. Fusíveis NH / D / Ultrarrápidos
+  if (/FUSIVEL|NH00|NH1|FUS.*ULTRA/i.test(all)) {
+    return '/assets/components/fusivel-nh.svg';
+  }
+
+  // 27. Cabos Elétricos e Industriais
+  if (/CABO.*PP|CABO.*FLEX|CABO.*COMANDO|CORDAO/i.test(all)) {
     return '/assets/components/cabo-industrial.svg';
   }
 
-  // 25. Motores Elétricos e Redutores
-  if (/MOTOR.*ELETR|MOTOR.*TRIF|REDUTOR/i.test(all)) {
+  // 28. O-rings e Vedações
+  if (/O-RING|ORING|VEDACAO|GAXETA|RETENTOR|QUAD-RING|CHEVRON/i.test(all)) {
+    return '/assets/components/retentor-oring.svg';
+  }
+
+  // 29. Motores Elétricos
+  if (/MOTOR.*ELETR|MOTOREDUTOR|SERVOMOTOR/i.test(all)) {
     return '/assets/components/motor-eletrico.svg';
   }
 
-  // 26. Correias e Polias
-  if (/CORREIA|POLIA|ENGRENAGEM|SINCRONIZAD/i.test(all)) {
-    return '/assets/components/correia-dentada.svg';
-  }
-
-  // 27. Discos e Pastilhas de Freio
-  if (/FREIO|DISCO DE FREIO|KAMPF.*8770|PASTILHA.*FREIO|ASTILHA.*FREIO/i.test(all)) {
-    return '/assets/components/disco-freio.svg';
-  }
-
-  // 28. Manômetros e Instrumentação
-  if (/MANOMETRO|TERMOPAR|TRANSMISSOR.*PRESSAO|BAR.*PSI/i.test(all)) {
-    return '/assets/components/manometro.svg';
-  }
-
-  // 29. Adesivos e Loctite
-  if (/ADESIVO|TRAVA.*ROSCA|LOCTITE|W742|ACETATO.*ETILA/i.test(all)) {
-    return '/assets/components/adesivo-loctite.svg';
-  }
-
-  // 30. Filtros e Lubrificação
-  if (/FILTRO|LUBRIFIC|OLEO/i.test(all)) {
+  // 30. Filtros Industriais
+  if (/FILTRO.*OLEO|ELEMENTO.*FILTRANTE|HYDAC/i.test(all)) {
     return '/assets/components/filtro-industrial.svg';
   }
 
-  // 31. Abraçadeiras e Fitas
-  if (/ABRACADEIRA|FITA ISOLANTE|FITA AUTO|FITA.*TEFLON/i.test(all)) {
-    return '/assets/components/abracadeira.svg';
+  // 31. Correias de Transmissão
+  if (/CORREIA.*DENTADA|CORREIA.*V|SYNCHROFLEX|OPTIBELT|CONTITECH|GATES/i.test(all)) {
+    return '/assets/components/correia-dentada.svg';
   }
 
   // 32. Gases Refrigerantes
-  if (/GAS REFRIGERANTE|R-134|R-22|R-407|R-410/i.test(all)) {
+  if (/GAS.*REFRIGERANTE|R-134|R-22|R-407|R-410/i.test(all)) {
     return '/assets/components/gas-refrigerante.svg';
   }
 
@@ -220,157 +276,137 @@ function getComponentImageUrl(codigo, descricao, categoria) {
   return '/assets/components/peca-mecanica-geral.svg';
 }
 
-// Generate comprehensive search keywords
-function extractKeywords(codigo, descricao, fabricante, dimensao, categoria) {
-  const text = `${codigo} ${descricao} ${fabricante || ''} ${dimensao || ''} ${categoria}`.toLowerCase();
+function extractKeywords(codigo, descricao, fabricante, dimensao, categoria, extra) {
+  const text = `${codigo} ${descricao} ${fabricante || ''} ${dimensao || ''} ${categoria} ${extra || ''}`.toLowerCase();
   const tokens = text
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .split(/[\s,\.\/\-\_\(\)\:\;\*\+]+/)
-    .filter(t => t.length >= 2 && !['de', 'da', 'do', 'em', 'para', 'com', 'sem', 'por'].includes(t));
+    .filter(t => t.length >= 2 && !['de', 'da', 'do', 'em', 'para', 'com', 'sem', 'por', 'conf'].includes(t));
   return Array.from(new Set(tokens)).slice(0, 15);
 }
 
-const recognizedCategories = [
-  'Peças de Máquina / Reposição',
-  'Comando e Manobra Elétrica',
-  'Ferramentas e Utensílios',
-  'Fusíveis e Proteção Elétrica',
-  'Automação e Controle',
-  'Sensores e Instrumentação',
-  'Resistências e Aquecimento',
-  'Motores e Transmissão',
-  'Fontes e Eletrônica',
-  'Gases e Consumíveis',
-  'Cabos e Conectores',
-  'Outros / Reposição',
-  'Filtros',
-  'Rolamentos',
-  'Pneumática',
-  'Hidráulica',
-  'Iluminação',
-  'Fixação',
-  'Vedação'
-];
+// Units regex at end of line: e.g. " UN UN ANEIS" or " PC PC PNEUM"
+const unitsRegex = /\s+(UN|PC|MT|RL|PAR|CX|PCT|KG|BR|TB|FR|JG|POT|BG|ML)\s+(UN|PC|MT|RL|PAR|CX|PCT|KG|BR|TB|FR|JG|POT|BG|ML)(\s+.*)?$/;
 
-const KNOWN_BRANDS = [
-  'FESTO', 'SMC', 'SICK', 'SKF', 'HYDAC', 'ALTUS', 'SIEMENS', 'DALMEC',
-  'WURTH', 'KAMPF', 'WEIDMULLER', 'OEMER', 'PIOVAN', 'BALLUFF', 'SABO',
-  'TRAPP', 'LOCTITE', 'SCHNEIDER', 'ABB', 'WEG', 'OMRON', 'PHOENIX CONTACT',
-  'DANFOSS', 'PARKER', 'REXROTH', 'IFM', 'BANNER', 'MOELLER', 'EATON', 'B&R'
-];
+const allParsedItems = [];
+const seenCodes = new Set();
 
-let rawLines = [];
-for (const f of ocrFiles) {
-  if (fs.existsSync(f)) {
-    const lines = fs.readFileSync(f, 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
-    rawLines.push(...lines);
+let totalLinesProcessed = 0;
+
+for (const f of pdfFiles) {
+  if (!fs.existsSync(f)) {
+    console.warn(`File not found: ${f}`);
+    continue;
+  }
+  const content = fs.readFileSync(f, 'utf8');
+  const lines = content.split('\n');
+  for (let rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('==') || line.startsWith('Cod.Classe')) continue;
+    totalLinesProcessed++;
+
+    const codeMatch = line.match(/([A-Z]{2}-[A-Z0-9]+-\d{4,5}-\d{2})/);
+    if (!codeMatch) continue;
+
+    const itemNumber = codeMatch[1];
+    if (seenCodes.has(itemNumber)) continue;
+    seenCodes.add(itemNumber);
+
+    const idx = line.indexOf(itemNumber);
+    const prefix = line.substring(0, idx).trim();
+    const suffix = line.substring(idx + itemNumber.length).trim();
+
+    // Prefix contains class code and class name
+    const prefixParts = prefix.split(/\s+/);
+    const codClasse = prefixParts[0] ? prefixParts[0].slice(0, 2) : itemNumber.slice(0, 2);
+    const descrClasse = prefixParts.length > 1 ? prefixParts.slice(1).join(' ') : prefix;
+
+    // Suffix contains description + units + extra
+    const unitMatch = suffix.match(unitsRegex);
+    let rawDesc = suffix;
+    let uomEstoque = '';
+    let uomCompra = '';
+    let extraDesc = '';
+    if (unitMatch) {
+      rawDesc = suffix.substring(0, unitMatch.index).trim();
+      uomEstoque = unitMatch[1];
+      uomCompra = unitMatch[2];
+      extraDesc = (unitMatch[3] || '').trim();
+    }
+
+    const detectedCat = detectCategory(itemNumber, rawDesc, descrClasse);
+    const detectedBrand = detectBrand(rawDesc, extraDesc);
+    const detectedDim = detectDimension(rawDesc);
+
+    // Check if we have an existing item to preserve user edits
+    const existing = existingMap.get(itemNumber);
+
+    const categoria = existing?.categoria || detectedCat;
+    const fabricante = existing?.fabricante || detectedBrand;
+    const dimensao = existing?.dimensao || detectedDim;
+    const imagemUrl = existing?.imagemUrl || getComponentImageUrl(itemNumber, rawDesc, categoria);
+    const favorito = existing?.favorito ?? false;
+    const status = existing?.status || 'disponivel';
+    const documentos = existing?.documentos || [];
+    const dataCriacao = existing?.dataCriacao || '2025-01-15';
+
+    // Build location
+    let localizacao = existing?.localizacao;
+    if (!localizacao) {
+      // Deterministic box/gaveta based on code number
+      const numMatch = itemNumber.match(/(\d{4,5})-\d{2}$/);
+      const boxNum = numMatch ? parseInt(numMatch[1], 10) % 400 + 1 : 101;
+      localizacao = `Almoxarifado Central - Gaveta / Box ${boxNum}`;
+    }
+
+    // Build observacoes
+    const obsParts = [];
+    if (descrClasse) obsParts.push(`Classe: ${descrClasse}`);
+    if (fabricante) obsParts.push(`Fabricante: ${fabricante}`);
+    if (dimensao) obsParts.push(`Dimensão: ${dimensao}`);
+    if (uomEstoque) obsParts.push(`Unid. Estoque: ${uomEstoque}`);
+    if (uomCompra && uomCompra !== uomEstoque) obsParts.push(`Unid. Compra: ${uomCompra}`);
+    if (extraDesc) obsParts.push(`Especificação Extra: ${extraDesc}`);
+
+    const observacoes = existing?.observacoes || obsParts.join(' | ');
+    const palavrasChave = extractKeywords(itemNumber, rawDesc, fabricante, dimensao, categoria, extraDesc);
+
+    allParsedItems.push({
+      id: existing?.id || `item-${allParsedItems.length + 1}`,
+      codigo: itemNumber,
+      descricao: rawDesc,
+      categoria,
+      fabricante,
+      dimensao,
+      localizacao,
+      palavrasChave,
+      imagemUrl,
+      favorito,
+      status,
+      observacoes,
+      documentos,
+      dataCriacao,
+    });
   }
 }
 
-console.log(`Loaded ${rawLines.length} lines from OCR source files.`);
-
-const allItems = [];
-
-rawLines.forEach((line, index) => {
-  const codeMatch = line.match(/^([A-Z0-9]{2}-[A-Z0-9]{4,5}-[A-Z0-9]{5}-[A-Z0-9]{2})\s+(.*)$/);
-  if (!codeMatch) {
-    console.warn(`Unmatched line format at index ${index}: ${line.slice(0, 40)}`);
-    return;
+// Also include any items from existing that weren't in PDF (e.g. user manually created items)
+for (const [code, item] of existingMap) {
+  if (!seenCodes.has(code)) {
+    allParsedItems.push(item);
   }
+}
 
-  const codigo = codeMatch[1];
-  const rest = codeMatch[2];
+console.log(`Total items in updated catalogue: ${allParsedItems.length}`);
 
-  // Match category
-  let catFound = '';
-  let catIdx = -1;
-  for (const c of recognizedCategories) {
-    const pos = rest.indexOf(c);
-    if (pos !== -1) {
-      if (!catFound || c.length > catFound.length) {
-        catFound = c;
-        catIdx = pos;
-      }
-    }
-  }
-
-  const rawDescricao = (catIdx !== -1 ? rest.substring(0, catIdx) : rest).trim();
-  const afterCat = catIdx !== -1 ? rest.substring(catIdx + catFound.length).trim() : '';
-
-  // Extract page/gaveta at the end
-  const pageMatch = afterCat.match(/(?:_{3,}\s*)?(\d{1,4})$/);
-  const gaveta = pageMatch ? pageMatch[1] : '';
-  const middle = pageMatch ? afterCat.substring(0, pageMatch.index).trim() : afterCat;
-
-  // Middle might have subgrupo and details
-  const middleTokens = middle.split(/\s+/);
-  const subcat = middleTokens[0] || '';
-  const details = middleTokens.slice(1).join(' ').replace(/_{3,}/g, '').trim();
-
-  // Try to detect brand and dimension from details and description
-  let detectedBrand = '';
-  const uppercaseRest = `${rawDescricao} ${details}`.toUpperCase();
-  for (const brand of KNOWN_BRANDS) {
-    if (new RegExp(`\\b${brand}\\b`, 'i').test(uppercaseRest)) {
-      detectedBrand = brand;
-      break;
-    }
-  }
-
-  let detectedDim = '';
-  const dimRegex = /(?:M\d+[\s,xX\.\d]+MM|\d+[\s,xX\.\d]+MM|\d+[\s,xX\.\d]+ pol|\d+\/\d+"?|\b\d+G\b|\b\d+KG\b|\b\d+V\b|\b\d+W\b)/i;
-  const dimMatch = `${details} ${rawDescricao}`.match(dimRegex);
-  if (dimMatch) {
-    detectedDim = dimMatch[0].trim();
-  }
-
-  const normalizedCat = normalizeCategory(catFound);
-  const location = gaveta ? `Almoxarifado Central - Gaveta / Box ${gaveta}` : 'Almoxarifado Central - Prateleira Geral';
-  
-  const obsParts = [];
-  if (detectedBrand) obsParts.push(`Fabricante: ${detectedBrand}`);
-  if (detectedDim) obsParts.push(`Dimensão / Especificação: ${detectedDim}`);
-  if (details && details !== 'N/A' && details !== detectedBrand && details !== detectedDim) {
-    obsParts.push(`Detalhes: ${details}`);
-  }
-  if (gaveta) obsParts.push(`Endereço físico: Gaveta ${gaveta}`);
-  if (subcat) obsParts.push(`Subcategoria: ${subcat}`);
-
-  const observacoes = obsParts.join(' | ') || 'Item cadastrado no catálogo técnico Huhtamaki.';
-  const keywords = extractKeywords(codigo, rawDescricao, detectedBrand, detectedDim, normalizedCat);
-  const imagemUrl = getComponentImageUrl(codigo, rawDescricao, normalizedCat);
-
-  allItems.push({
-    id: `item-${index + 1}`,
-    codigo,
-    descricao: rawDescricao,
-    categoria: normalizedCat,
-    fabricante: detectedBrand || undefined,
-    dimensao: detectedDim || undefined,
-    localizacao: location,
-    palavrasChave: keywords,
-    imagemUrl,
-    favorito: false,
-    status: 'disponivel',
-    observacoes,
-    documentos: [],
-    dataCriacao: '2025-01-15'
-  });
+// Category distribution
+const catCount = {};
+allParsedItems.forEach(i => {
+  catCount[i.categoria] = (catCount[i.categoria] || 0) + 1;
 });
+console.log('Category distribution:');
+console.table(catCount);
 
-console.log(`Generated exactly ${allItems.length} catalog items!`);
-
-// Print category distribution
-const dist = {};
-allItems.forEach(i => { dist[i.categoria] = (dist[i.categoria] || 0) + 1; });
-console.log('Category distribution:', dist);
-
-// Print image distribution
-const imgDist = {};
-allItems.forEach(i => { imgDist[i.imagemUrl] = (imgDist[i.imagemUrl] || 0) + 1; });
-console.log('Image distribution across items:', Object.keys(imgDist).length, 'distinct images used.');
-
-// Save to JSON
-const outputPath = path.join(__dirname, '../src/data/catalogItems.json');
-fs.writeFileSync(outputPath, JSON.stringify(allItems, null, 2), 'utf8');
-console.log(`Successfully saved ${allItems.length} items to ${outputPath}`);
+// Save to catalogItems.json
+fs.writeFileSync(existingPath, JSON.stringify(allParsedItems, null, 2), 'utf8');
+console.log(`Updated ${existingPath} successfully!`);
