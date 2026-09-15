@@ -50,19 +50,58 @@ export const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
       return;
     }
 
-    // Max 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      setError('A imagem é muito grande. O tamanho máximo permitido é 10 MB.');
+    // Max 15MB upload file size
+    if (file.size > 15 * 1024 * 1024) {
+      setError('A imagem é muito grande. O tamanho máximo permitido é 15 MB.');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setPreviewUrl(result);
-        setImageUrl(result);
-      }
+      const rawDataUrl = e.target?.result as string;
+      if (!rawDataUrl) return;
+
+      // Compress and optimize image to maintain lightweight localStorage footprint
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDimension = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimizedUrl = canvas.toDataURL('image/jpeg', 0.82);
+            setPreviewUrl(optimizedUrl);
+            setImageUrl(optimizedUrl);
+          } else {
+            setPreviewUrl(rawDataUrl);
+            setImageUrl(rawDataUrl);
+          }
+        } catch {
+          setPreviewUrl(rawDataUrl);
+          setImageUrl(rawDataUrl);
+        }
+      };
+      img.onerror = () => {
+        setPreviewUrl(rawDataUrl);
+        setImageUrl(rawDataUrl);
+      };
+      img.src = rawDataUrl;
     };
     reader.onerror = () => {
       setError('Erro ao ler a imagem selecionada.');

@@ -1,22 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search,
+  SlidersHorizontal,
+  X,
+  Shield,
+  LogOut,
+  Lock,
   Package,
   Wrench,
-  Layers,
   ChevronDown,
   ChevronRight,
-  ShieldCheck,
-  Lock,
-  LogOut,
-  Shield,
-  X,
 } from 'lucide-react';
 import { ViewMode, UserRole, CatalogItem } from '../types';
 import {
-  CATEGORIAS_CONSUMO_GERAL,
-  CATEGORIAS_CONSUMO_MANUTENCAO,
-  formatCategoryName,
+  CONSUMO_GERAL_CATEGORIAS,
+  CONSUMO_MANUTENCAO_CATEGORIAS,
 } from '../data/initialCatalog';
 
 interface SidebarProps {
@@ -27,9 +25,29 @@ interface SidebarProps {
   items: CatalogItem[];
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
-  userRole: UserRole;
-  onPromptGestor: () => void;
-  onLogoutGestor: () => void;
+  userRole?: UserRole;
+  onPromptGestor?: () => void;
+  onLogoutGestor?: () => void;
+}
+
+function formatCategoryName(name: string): string {
+  const map: Record<string, string> = {
+    'MATERIAL AUXILIAR DE PRODUÇÃO': 'Material Auxiliar de Produção',
+    'MATERIAL DE EMBALAGENS': 'Material de Embalagens',
+    'MATERIAIS DE ESCRITÓRIO': 'Materiais de Escritório',
+    'MATERIAIS DE LIMPEZA': 'Materiais de Limpeza',
+    'MATERIAIS DE SEGURANÇA': 'Materiais de Segurança',
+    'MATERIAL DE USO/CONSUMO': 'Material de Uso/Consumo',
+    'MATERIAIS DE USO/CONSUMO': 'Material de Uso/Consumo',
+    'MATERIAIS DIVERSOS': 'Materiais Diversos',
+    'MATERIAL DIVERSO': 'Materiais Diversos',
+    'UNIFORMES': 'Uniformes',
+    'MATERIAL ELÉTRICO': 'Material Elétrico',
+    'MATERIAL MECÂNICO': 'Material Mecânico',
+    'UTILITIES-GAS': 'Utilities - Gás',
+    'UTILITES-GÁS': 'Utilities - Gás',
+  };
+  return map[name] || name;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -44,52 +62,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPromptGestor,
   onLogoutGestor,
 }) => {
-  const [openGeral, setOpenGeral] = useState(true);
-  const [openManutencao, setOpenManutencao] = useState(true);
-  const [openOutras, setOpenOutras] = useState(false);
+  const [isConsumoGeralOpen, setIsConsumoGeralOpen] = useState(true);
+  const [isConsumoManutencaoOpen, setIsConsumoManutencaoOpen] = useState(true);
 
-  const {
-    countsByCategory,
-    consumoGeralTotal,
-    consumoManutencaoTotal,
-    outrosTotal,
-    outrosCategoriasList,
-  } = useMemo(() => {
+  // Compute item counts by category and group
+  const { countsByCategory, consumoGeralTotal, consumoManutencaoTotal } = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const it of items) {
-      let cat = it.categoria;
-      if (cat === 'MATERIAL DIVERSO') cat = 'MATERIAIS DIVERSOS';
-      if (cat === 'MATERIAIS DE USO/CONSUMO' || cat === 'MATERIAL DE USO/CONSUMO' || it.codigo.startsWith('UN-')) {
-        cat = 'UNIFORMES';
+    for (const item of items) {
+      let cat = item.categoria === 'MATERIAL DIVERSO' ? 'MATERIAIS DIVERSOS' : item.categoria;
+      if (cat === 'MATERIAIS DE USO/CONSUMO') cat = 'MATERIAL DE USO/CONSUMO';
+      if (cat === 'UTILITES-GÁS' || cat === 'UTILITIES-GÁS' || cat === 'UTILITIES GÁS' || cat === 'UTILITIES GAS') {
+        cat = 'UTILITIES-GAS';
       }
       counts[cat] = (counts[cat] || 0) + 1;
     }
-
-    const geralTotal = CATEGORIAS_CONSUMO_GERAL.reduce(
-      (acc, cat) => acc + (counts[cat] || 0),
-      0
-    );
-    const manutencaoTotal = CATEGORIAS_CONSUMO_MANUTENCAO.reduce(
-      (acc, cat) => acc + (counts[cat] || 0),
-      0
-    );
-
-    const outrasList: string[] = [];
-    let outrasCount = 0;
-    for (const cat of Object.keys(counts)) {
-      if (!CATEGORIAS_CONSUMO_GERAL.includes(cat) && !CATEGORIAS_CONSUMO_MANUTENCAO.includes(cat)) {
-        outrasList.push(cat);
-        outrasCount += counts[cat];
-      }
-    }
-    outrasList.sort();
+    const cGeral = CONSUMO_GERAL_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
+    const cManut = CONSUMO_MANUTENCAO_CATEGORIAS.reduce((acc, cat) => acc + (counts[cat] || 0), 0);
 
     return {
       countsByCategory: counts,
-      consumoGeralTotal: geralTotal,
-      consumoManutencaoTotal: manutencaoTotal,
-      outrosTotal: outrasCount,
-      outrosCategoriasList: outrasList,
+      consumoGeralTotal: cGeral,
+      consumoManutencaoTotal: cManut,
     };
   }, [items]);
 
@@ -101,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile Backdrop */}
       {isOpenMobile && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs md:hidden"
@@ -115,14 +108,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Top brand header matching screenshot */}
+        {/* Header with Logo */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800/80 bg-[#080e1f]">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 font-black text-white bg-gradient-to-br from-[#3F78CC] to-[#1A3282] rounded-lg shadow-sm border border-[#3F78CC]/30 tracking-tight text-base select-none">
+            <div className="flex items-center justify-center w-10 h-10 font-black text-white bg-gradient-to-br from-[#3F78CC] to-[#1A3282] rounded-lg shadow-sm border border-[#3F78CC]/30 tracking-tight text-base">
               CM
             </div>
             <div>
-              <div className="text-base font-extrabold tracking-wider text-white uppercase font-sans">
+              <div className="text-base font-extrabold tracking-wider text-white uppercase">
                 Catálogo
               </div>
               <div className="text-[10px] tracking-widest text-[#3F78CC] uppercase font-mono font-semibold">
@@ -142,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Scrollable navigation area */}
+        {/* Navigation Content */}
         <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
           {userRole === 'gestor' && (
             <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center justify-between text-[11px] font-mono text-amber-300">
@@ -154,21 +147,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Navigation Section */}
+          {/* NAVEGAÇÃO */}
           <div>
             <div className="px-3 mb-2 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono flex items-center justify-between">
               <span>NAVEGAÇÃO</span>
             </div>
 
             <nav className="space-y-2">
-              {/* Consulta de Itens (All) */}
+              {/* Consulta de itens (Todos) */}
               <button
                 id="nav-btn-consulta"
                 type="button"
                 onClick={() => handleSelect('TODOS')}
                 className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
                   currentView === 'catalog' && selectedCategory === 'TODOS'
-                    ? 'bg-slate-800 text-white border-l-4 border-[#3f78cc] shadow-xs'
+                    ? 'bg-slate-850 text-white border-l-4 border-[#3f78cc] shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
                 title="Consultar todos os itens do catálogo"
@@ -182,7 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </span>
               </button>
 
-              {/* Consumo Geral */}
+              {/* BLOCO 1: Consumo Geral */}
               <div className="rounded-lg bg-slate-900/40 border border-slate-800/60 p-1 space-y-1">
                 <div
                   className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-bold rounded-md transition-colors ${
@@ -202,19 +195,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="tracking-wide">Consumo Geral</span>
                   </button>
                   <div className="flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-sky-300 bg-sky-950/90 border border-sky-800/50 rounded">
+                    <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold text-sky-300 bg-sky-950/90 border border-sky-800/50 rounded">
                       {consumoGeralTotal}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setOpenGeral(!openGeral);
+                        setIsConsumoGeralOpen(!isConsumoGeralOpen);
                       }}
                       className="p-0.5 text-slate-400 hover:text-white rounded"
-                      title={openGeral ? 'Recolher categorias' : 'Expandir categorias'}
+                      title={isConsumoGeralOpen ? 'Recolher categorias' : 'Expandir categorias'}
                     >
-                      {openGeral ? (
+                      {isConsumoGeralOpen ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -223,17 +216,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
 
-                {openGeral && (
+                {/* Subcategorias do Consumo Geral */}
+                {isConsumoGeralOpen && (
                   <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
-                    {CATEGORIAS_CONSUMO_GERAL
-                      .filter((cat) => cat !== 'MATERIAL DE USO/CONSUMO' || (countsByCategory[cat] || 0) > 0)
-                      .map((cat) => {
+                    {CONSUMO_GERAL_CATEGORIAS.map((cat) => {
                       const isActive = currentView === 'catalog' && selectedCategory === cat;
                       const count = countsByCategory[cat] || 0;
                       return (
                         <button
-                          type="button"
                           key={cat}
+                          type="button"
                           id={`nav-cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                           onClick={() => handleSelect(cat)}
                           className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
@@ -254,7 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
               </div>
 
-              {/* Consumo Manutenção */}
+              {/* BLOCO 2: Consumo Manutenção */}
               <div className="rounded-lg bg-slate-900/40 border border-slate-800/60 p-1 space-y-1">
                 <div
                   className={`flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-bold rounded-md transition-colors ${
@@ -274,19 +266,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="tracking-wide">Consumo Manutenção</span>
                   </button>
                   <div className="flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 border border-amber-800/50 rounded">
+                    <span className="px-1.5 py-0.2 text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 border border-amber-800/50 rounded">
                       {consumoManutencaoTotal}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setOpenManutencao(!openManutencao);
+                        setIsConsumoManutencaoOpen(!isConsumoManutencaoOpen);
                       }}
                       className="p-0.5 text-slate-400 hover:text-white rounded"
-                      title={openManutencao ? 'Recolher categorias' : 'Expandir categorias'}
+                      title={isConsumoManutencaoOpen ? 'Recolher categorias' : 'Expandir categorias'}
                     >
-                      {openManutencao ? (
+                      {isConsumoManutencaoOpen ? (
                         <ChevronDown className="w-3.5 h-3.5" />
                       ) : (
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -295,15 +287,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
 
-                {openManutencao && (
+                {/* Subcategorias do Consumo Manutenção */}
+                {isConsumoManutencaoOpen && (
                   <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
-                    {CATEGORIAS_CONSUMO_MANUTENCAO.map((cat) => {
+                    {CONSUMO_MANUTENCAO_CATEGORIAS.map((cat) => {
                       const isActive = currentView === 'catalog' && selectedCategory === cat;
                       const count = countsByCategory[cat] || 0;
                       return (
                         <button
-                          type="button"
                           key={cat}
+                          type="button"
                           id={`nav-cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                           onClick={() => handleSelect(cat)}
                           className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
@@ -323,61 +316,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 )}
               </div>
-
-              {/* Outras Categorias */}
-              {outrosTotal > 0 && (
-                <div className="pt-1">
-                  <button
-                    id="nav-btn-outras-categorias"
-                    type="button"
-                    onClick={() => setOpenOutras(!openOutras)}
-                    className="flex items-center justify-between w-full px-2.5 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 rounded-md transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-3 h-3 text-slate-500" />
-                      <span>Outras Categorias</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono text-slate-500">{outrosTotal}</span>
-                      {openOutras ? (
-                        <ChevronDown className="w-3 h-3 text-slate-500" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3 text-slate-500" />
-                      )}
-                    </div>
-                  </button>
-
-                  {openOutras && (
-                    <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
-                      {outrosCategoriasList.map((cat) => {
-                        const isActive = currentView === 'catalog' && selectedCategory === cat;
-                        const count = countsByCategory[cat] || 0;
-                        return (
-                          <button
-                            type="button"
-                            key={cat}
-                            onClick={() => handleSelect(cat)}
-                            className={`flex items-center justify-between w-full px-2 py-1 text-[11px] font-medium rounded transition-colors text-left ${
-                              isActive
-                                ? 'bg-[#1A3282] text-white font-bold shadow-xs'
-                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-                            }`}
-                          >
-                            <span className="truncate pr-1">{formatCategoryName(cat)}</span>
-                            <span className="font-mono text-[10px] text-slate-500 shrink-0">
-                              {count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
             </nav>
           </div>
 
-          {/* Administration Section */}
+          {/* ADMINISTRAÇÃO & DADOS */}
           <div className="pt-3 border-t border-slate-800/80 space-y-2">
             <div className="px-3 text-[10px] font-bold tracking-widest text-slate-400 uppercase font-mono">
               ADMINISTRAÇÃO
@@ -393,12 +335,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
                   currentView === 'admin'
-                    ? 'bg-slate-800 text-white border-l-4 border-[#f59e0b] shadow-xs'
+                    ? 'bg-slate-850 text-white border-l-4 border-[#f59e0b] shadow-xs'
                     : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#f59e0b]" />
+                  <SlidersHorizontal className="w-4 h-4 text-[#f59e0b]" />
                   <span>Administração</span>
                 </div>
                 {userRole !== 'gestor' && (
@@ -411,14 +353,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </nav>
           </div>
 
-          {/* Gestor Switch Button */}
+          {/* Gestor Lock/Unlock */}
           <div className="pt-2 px-1">
             {userRole === 'gestor' ? (
               <button
                 id="btn-sidebar-sair-gestor"
                 type="button"
                 onClick={() => {
-                  onLogoutGestor();
+                  onLogoutGestor?.();
                   if (isOpenMobile) onToggleMobile();
                 }}
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900/60 rounded-lg border border-rose-800/50 transition-colors shadow-xs"
@@ -432,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 id="btn-sidebar-prompt-gestor"
                 type="button"
                 onClick={() => {
-                  onPromptGestor();
+                  onPromptGestor?.();
                   if (isOpenMobile) onToggleMobile();
                 }}
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-slate-400 hover:text-amber-300 bg-slate-850/60 hover:bg-slate-850 rounded-lg border border-slate-800 transition-colors"
@@ -445,7 +387,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Footer Brand Seal */}
+        {/* Footer Status - AMBIENTE INTERNO MANUTAMAKI */}
         <div className="p-4 border-t border-slate-800/80 bg-[#090f20]">
           <div className="flex items-center gap-2 text-[11px] font-mono tracking-widest text-slate-400 uppercase">
             <Shield className="w-3.5 h-3.5 text-[#3f78cc]" />
@@ -456,3 +398,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
+

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="cad-grid-est" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.8" />
+    </pattern>
+    <linearGradient id="metal-grad-est" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#e2e8f0" />
+      <stop offset="70%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <linearGradient id="blade-steel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#cbd5e1" />
+      <stop offset="70%" stop-color="#94a3b8" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+    <linearGradient id="body-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="grip-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="brass-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+    <filter id="shadow-est" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Background CAD Grid -->
+  <rect width="100%" height="100%" fill="#f8fafc" />
+  <rect width="100%" height="100%" fill="url(#cad-grid-est)" />
+
+  <!-- Outer CAD border -->
+  <rect x="15" y="15" width="370" height="270" fill="none" stroke="#cbd5e1" stroke-width="1.5" />
+  <rect x="19" y="19" width="362" height="262" fill="none" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4 4" />
+
+  <!-- Dimension line & technical markers -->
+  <line x1="45" y1="42" x2="355" y2="42" stroke="#0284c7" stroke-width="1" stroke-dasharray="2 2" />
+  <circle cx="45" cy="42" r="2.5" fill="#0284c7" />
+  <circle cx="355" cy="42" r="2.5" fill="#0284c7" />
+  <text x="200" y="38" font-family="monospace" font-size="9" fill="#0284c7" text-anchor="middle" font-weight="bold">CORPO ERGONÔMICO DE SEGURANÇA MARTOR / SLICE</text>
+
+  <!-- Industrial Safety Knife / Estilete Illustration -->
+  <g transform="translate(45, 95)" filter="url(#shadow-est)">
+    <!-- Trapezoidal Blade protruding from front -->
+    <polygon points="260,35 315,50 315,58 260,65" fill="url(#blade-steel)" stroke="#475569" stroke-width="1" />
+    <!-- Blade bevel line -->
+    <line x1="270" y1="42" x2="313" y2="52" stroke="#ffffff" stroke-width="1" />
+    <line x1="285" y1="38" x2="285" y2="60" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="2 2" />
+
+    <!-- Knife Body -->
+    <path d="M 30,30 
+             L 250,30 
+             Q 265,30 270,45 
+             L 270,55 
+             Q 265,70 250,70 
+             L 30,70 
+             Q 15,70 15,50 
+             Q 15,30 30,30 Z" 
+          fill="url(#body-cyan)" stroke="#0369a1" stroke-width="2" />
+
+    <!-- Ergonomic rubber grips -->
+    <rect x="40" y="38" width="80" height="24" rx="4" fill="url(#grip-dark)" opacity="0.85" />
+    <line x1="55" y1="38" x2="55" y2="62" stroke="#64748b" stroke-width="1.5" />
+    <line x1="70" y1="38" x2="70" y2="62" stroke="#64748b" stroke-width="1.5" />
+    <line x1="85" y1="38" x2="85" y2="62" stroke="#64748b" stroke-width="1.5" />
+    <line x1="100" y1="38" x2="100" y2="62" stroke="#64748b" stroke-width="1.5" />
+
+    <!-- Slider Trigger / Auto-retract Button -->
+    <rect x="155" y="24" width="45" height="12" rx="3" fill="url(#brass-gold)" stroke="#854d0e" stroke-width="1" />
+    <line x1="165" y1="26" x2="165" y2="34" stroke="#ca8a04" stroke-width="1" />
+    <line x1="172" y1="26" x2="172" y2="34" stroke="#ca8a04" stroke-width="1" />
+    <line x1="179" y1="26" x2="179" y2="34" stroke="#ca8a04" stroke-width="1" />
+    <line x1="186" y1="26" x2="186" y2="34" stroke="#ca8a04" stroke-width="1" />
+
+    <!-- Lanyard / Hanging Hole -->
+    <circle cx="28" cy="50" r="6" fill="#f8fafc" stroke="#0369a1" stroke-width="1.5" />
+    <circle cx="28" cy="50" r="3" fill="#cbd5e1" />
+  </g>
+
+  <!-- Technical Spec Details Box -->
+  <rect x="30" y="225" width="340" height="45" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+  <text x="45" y="243" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0f172a">MATERIAL DE USO/CONSUMO</text>
+  <text x="45" y="258" font-family="monospace" font-size="8.5" fill="#64748b">ESTILETES • LÂMINAS DE SEGURANÇA • ESPÁTULAS • CONSUMÍVEIS TÉCNICOS</text>
+  <text x="355" y="250" font-family="monospace" font-size="9" font-weight="bold" fill="#0284c7" text-anchor="end">PADRÃO INDUSTRIAL</text>
+</svg>
