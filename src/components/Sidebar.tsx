@@ -59,7 +59,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     for (const it of items) {
       let cat = it.categoria;
       if (cat === 'MATERIAL DIVERSO') cat = 'MATERIAIS DIVERSOS';
-      if (cat === 'MATERIAIS DE USO/CONSUMO') cat = 'MATERIAL DE USO/CONSUMO';
+      if (cat === 'MATERIAIS DE USO/CONSUMO' || cat === 'MATERIAL DE USO/CONSUMO' || it.codigo.startsWith('UN-')) {
+        cat = 'UNIFORMES';
+      }
       counts[cat] = (counts[cat] || 0) + 1;
     }
 
@@ -223,7 +225,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {openGeral && (
                   <div className="pl-2 ml-2 border-l border-slate-800 space-y-0.5 pt-0.5">
-                    {CATEGORIAS_CONSUMO_GERAL.map((cat) => {
+                    {CATEGORIAS_CONSUMO_GERAL
+                      .filter((cat) => cat !== 'MATERIAL DE USO/CONSUMO' || (countsByCategory[cat] || 0) > 0)
+                      .map((cat) => {
                       const isActive = currentView === 'catalog' && selectedCategory === cat;
                       const count = countsByCategory[cat] || 0;
                       return (

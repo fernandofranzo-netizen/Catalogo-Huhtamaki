@@ -99,6 +99,11 @@ function loadAndMergeCatalog(): CatalogItem[] {
         item.descricao = 'R' + item.descricao;
       }
 
+      // Ensure UN items and uniforms belong to UNIFORMES category in Consumo Geral
+      if (item.codigo.startsWith('UN-') || item.categoria === 'MATERIAL DE USO/CONSUMO') {
+        item.categoria = 'UNIFORMES';
+      }
+
       mergedList.push(item);
       processedCodes.add(codeKey);
     }

@@ -80,7 +80,9 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
     for (const it of items) {
       let cat = it.categoria;
       if (cat === 'MATERIAL DIVERSO') cat = 'MATERIAIS DIVERSOS';
-      if (cat === 'MATERIAIS DE USO/CONSUMO') cat = 'MATERIAL DE USO/CONSUMO';
+      if (cat === 'MATERIAIS DE USO/CONSUMO' || cat === 'MATERIAL DE USO/CONSUMO' || it.codigo.startsWith('UN-')) {
+        cat = 'UNIFORMES';
+      }
       counts[cat] = (counts[cat] || 0) + 1;
     }
 
@@ -145,10 +147,12 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
         if (activeCategory !== 'TODOS') {
           let itemCat = item.categoria;
           if (itemCat === 'MATERIAL DIVERSO') itemCat = 'MATERIAIS DIVERSOS';
-          if (itemCat === 'MATERIAIS DE USO/CONSUMO') itemCat = 'MATERIAL DE USO/CONSUMO';
+          if (itemCat === 'MATERIAIS DE USO/CONSUMO' || itemCat === 'MATERIAL DE USO/CONSUMO' || item.codigo.startsWith('UN-')) {
+            itemCat = 'UNIFORMES';
+          }
           const normActive =
-            activeCategory === 'MATERIAIS DE USO/CONSUMO'
-              ? 'MATERIAL DE USO/CONSUMO'
+            activeCategory === 'MATERIAIS DE USO/CONSUMO' || activeCategory === 'MATERIAL DE USO/CONSUMO'
+              ? 'UNIFORMES'
               : activeCategory;
 
           if (normActive === 'GRUPO:CONSUMO_GERAL') {
@@ -283,11 +287,13 @@ export const CatalogSearch: React.FC<CatalogSearchProps> = ({
                 <option value="GRUPO:CONSUMO_GERAL">
                   Todos em Consumo Geral ({consumoGeralTotal})
                 </option>
-                {CATEGORIAS_CONSUMO_GERAL.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {formatCategoryName(cat)} ({countsByCategory[cat] || 0})
-                  </option>
-                ))}
+                {CATEGORIAS_CONSUMO_GERAL
+                  .filter((cat) => cat !== 'MATERIAL DE USO/CONSUMO' || (countsByCategory[cat] || 0) > 0)
+                  .map((cat) => (
+                    <option key={cat} value={cat}>
+                      {formatCategoryName(cat)} ({countsByCategory[cat] || 0})
+                    </option>
+                  ))}
               </optgroup>
 
               <optgroup label="Consumo Manutenção">
